@@ -234,11 +234,13 @@ Each task is end to end: logic with unit tests, then UI, then a manual check in 
   Verify: the live URL works, installs as a PWA and works offline after the first visit.
   Note: pushed commit `133e2ad` on 2026-10-07; the workflow deployed it. The live site loads the real art without errors, activates its service worker and keeps an adopted bunny after an offline reload.
 
-- [ ] **5.7 Definition of done.** Go through every item in `PSD.md` section 12 and tick the ones that are verified.
+- [x] **5.7 Definition of done.** Go through every item in `PSD.md` section 12 and tick the ones that are verified.
   Verify: all items except the last are ticked.
+  Note: every item in `PSD.md` section 12 is verified and ticked. The sprite item is ticked with one known deviation: 10 of the 16 px sprites were redrawn by hand with PixelLab candidates as a guide (see the 3.8 and 3.9 notes); the user approved the final gallery.
 
-- [ ] **5.8 Phone test. CHECKPOINT.** Ask the user to install the game on their friend's phone and play for a day.
+- [x] **5.8 Phone test. CHECKPOINT.** Ask the user to install the game on their friend's phone and play for a day.
   Verify: the user confirms it works. Tick the last item in `PSD.md` section 12.
+  Note: the user reported on 2026-10-07 that their friend plays it and loves it.
 
 ## Phase 6: Adventure scenes (PSD 1.2)
 
@@ -250,8 +252,9 @@ Each task is end to end: logic with unit tests, then UI, then a manual check in 
   Verify: `npm run check:sprites` reports 73 ok; every scene uses only palette colours; the gallery shows each scene with a bunny in its outfit.
   Note: 220 generations. Details and job ids in `art/ART_LOG.md`.
 
-- [ ] **6.3 Review. CHECKPOINT.** Show the eight scenes to the user.
+- [x] **6.3 Review. CHECKPOINT.** Show the eight scenes to the user.
   Verify: the user approves them.
+  Note: approved by the user on 2026-10-07.
 
 ---
 

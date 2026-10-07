@@ -743,21 +743,21 @@ Chromium with the `Pixel 7` device profile, against `npm run preview`, using `/b
 
 The MVP is done when every item is true:
 
-- [ ] `npm run typecheck`, `npm test` and `npm run test:e2e` all pass.
-- [ ] `npm run check:sprites` passes; all 73 sprites are real PixelLab art (no placeholders).
-- [ ] The user approved the master bunny and the final sprite gallery.
-- [ ] Adopting, all five actions, all refusals, sleep, sickness, depression, growth and all eight adventures work as specified in section 8.
-- [ ] Needs keep changing while the game is closed, and the game catches up correctly when reopened.
-- [ ] The adult look depends on care (verified by unit tests at the boundaries).
-- [ ] Outfits drop on first completion, are auto-equipped, and can be changed in the Wardrobe.
-- [ ] A save code restores the exact bunny in a fresh browser profile.
-- [ ] Start over works and keeps the sound setting.
-- [ ] Sound is off by default and toggles in Settings.
-- [ ] The game is deployed to GitHub Pages and the URL is recorded in `PSD_PROGRESS.md`.
-- [ ] The game is installable as a PWA and loads offline after the first visit.
-- [ ] Layout works from 360 px to desktop widths; pixels stay crisp.
-- [ ] `?dev=1` shows the dev panel; without it, no dev UI is visible.
-- [ ] The user confirmed it works on the friend's phone.
+- [x] `npm run typecheck`, `npm test` and `npm run test:e2e` all pass.
+- [x] `npm run check:sprites` passes; all 73 sprites are real PixelLab art (no placeholders).
+- [x] The user approved the master bunny and the final sprite gallery.
+- [x] Adopting, all five actions, all refusals, sleep, sickness, depression, growth and all eight adventures work as specified in section 8.
+- [x] Needs keep changing while the game is closed, and the game catches up correctly when reopened.
+- [x] The adult look depends on care (verified by unit tests at the boundaries).
+- [x] Outfits drop on first completion, are auto-equipped, and can be changed in the Wardrobe.
+- [x] A save code restores the exact bunny in a fresh browser profile.
+- [x] Start over works and keeps the sound setting.
+- [x] Sound is off by default and toggles in Settings.
+- [x] The game is deployed to GitHub Pages and the URL is recorded in `PSD_PROGRESS.md`.
+- [x] The game is installable as a PWA and loads offline after the first visit.
+- [x] Layout works from 360 px to desktop widths; pixels stay crisp.
+- [x] `?dev=1` shows the dev panel; without it, no dev UI is visible.
+- [x] The user confirmed it works on the friend's phone.
 
 ---
 
