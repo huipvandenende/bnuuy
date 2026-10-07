@@ -51,11 +51,11 @@ const BUNNY: Point = { x: 32, y: 56 };
 const BUNNY_SIZE = 64;
 const FEET_ROW = 60;
 const BODY_HEIGHTS: Record<BodyKey, number> = {
-  baby: 32,
-  teen: 44,
-  'adult-fluffy': 56,
-  'adult-normal': 56,
-  'adult-scruffy': 56,
+  baby: 34,
+  teen: 47,
+  'adult-fluffy': 60,
+  'adult-normal': 60,
+  'adult-scruffy': 60,
 };
 const DROPPING_SLOTS: readonly Point[] = [
   { x: 6, y: 100 },

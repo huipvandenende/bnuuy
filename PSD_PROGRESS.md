@@ -33,13 +33,13 @@
 - [x] **1.5 Base styles.** Add `src/styles/main.css` with the colour tokens (`PSD.md` 7.2), `color-scheme: light`, cream page background, centred column with a maximum width of 480 px, and Pixelify Sans via `@fontsource/pixelify-sans` (7.3).
   Verify: screenshot of the dev server at 390 px width shows the pixel font on a cream background.
 
-- [ ] **1.6 First deploy. CHECKPOINT.** Add `.github/workflows/deploy.yml` and set Vite's `base` to `/bnuuy/` (`PSD.md` 10.4). Ask the user to create a public GitHub repository named `bnuuy`, set Settings > Pages > Source to "GitHub Actions", add the remote and push `main`.
+- [x] **1.6 First deploy. CHECKPOINT.** Add `.github/workflows/deploy.yml` and set Vite's `base` to `/bnuuy/` (`PSD.md` 10.4). Ask the user to create a public GitHub repository named `bnuuy`, set Settings > Pages > Source to "GitHub Actions", add the remote and push `main`.
   Verify: the printed URL loads the page. Write the URL in the Notes section below.
-  Note: switched from Cloudflare Pages to GitHub Pages at the user's request (2026-10-07). Wrangler and the `deploy` script were removed. The workflow and base path are in place, and the e2e test and the offline check pass under `/bnuuy/`. Waiting for the user to create the repository and push.
+  Note: switched from Cloudflare Pages to GitHub Pages at the user's request (2026-10-07). Wrangler and the `deploy` script were removed. The first workflow run failed at "Set up Pages" because the push came before Pages was enabled; a rerun succeeded. The live site loads, installs its service worker and keeps the bunny after an offline reload.
 
-- [ ] **1.7 Check the PixelLab connection. CHECKPOINT if missing.** Check whether PixelLab MCP tools are available in this session. If not, ask the user to follow `PSD.md` 9.1 and restart Claude Code.
+- [x] **1.7 Check the PixelLab connection. CHECKPOINT if missing.** Check whether PixelLab MCP tools are available in this session. If not, ask the user to follow `PSD.md` 9.1 and restart Claude Code.
   Verify: a cheap read-only PixelLab call (for example listing characters or objects) succeeds. Record the available image tool names in the Notes section.
-  Note: blocked. No PixelLab MCP server is configured (`claude mcp list`). The user must follow `PSD.md` 9.1 and restart Claude Code.
+  Note: connected on 2026-10-07; `get_balance` reports a trial plan with 40 generations and one job at a time. Image tools: `create_image_pixflux` (1 generation, forced palette, img2img), `create_image_pixen` (1), `create_image_pro_flash` (5), `create_image_pro` (20 to 40), `inpaint_image_pro_flash` and `edit_image_pro_flash` (5), `inpaint_image` and `edit_image` (20), `create_1_direction_object` (20 to 40), `reduce_colors`, `unzoom_image` and `correct_pixelart` (0.1), `image_to_pixelart` (1), `pixelart_workbench` (free).
 
 ## Phase 2: Foundation
 
@@ -103,40 +103,50 @@ Follow `PSD.md` section 9 for every task. Log every sprite in `art/ART_LOG.md`. 
   Verify: a small script or `pngjs` check confirms 32 colours or fewer.
   Note: `art/palette.png` is 32 × 16 px with 32 colours in 4 × 4 swatches. The colour list is in `art/ART_LOG.md`. Done before the art checkpoint because it does not need PixelLab.
 
-- [ ] **3.2 Master bunny. CHECKPOINT.** Make `bunny-adult-normal-content.png` (64 × 64, transparent, feet on row 60) using the base prompt in 9.5. Run `reduce_colors` with the palette.
+- [x] **3.2 Master bunny. CHECKPOINT.** Make `bunny-adult-normal-content.png` (64 × 64, transparent, feet on row 60) using the base prompt in 9.5. Run `reduce_colors` with the palette.
   Verify: show the gallery screenshot to the user and get approval. Iterate until approved.
+  Note: approved by the user on 2026-10-07. Made with `create_image_pro` (candidate 9 of 16), with its colours mapped to `art/palette.png` by hand because `reduce_colors` turned the fur beige. 60 px tall, feet on row 60. Details in `art/ART_LOG.md`.
 
-- [ ] **3.3 Other bodies.** Make `bunny-baby-content`, `bunny-teen-content`, `bunny-adult-fluffy-content` and `bunny-adult-scruffy-content` with the master as reference (9.3 size guide, 9.5 prompts).
+- [x] **3.3 Other bodies.** Make `bunny-baby-content`, `bunny-teen-content`, `bunny-adult-fluffy-content` and `bunny-adult-scruffy-content` with the master as reference (9.3 size guide, 9.5 prompts).
   Verify: the gallery shows five bodies that look like the same bunny; adult variants share one outline.
+  Note: the teen came from `create_image_pro` with the master as reference. The baby needed four Pro attempts (they cropped the ears or kept adult proportions); the final baby is a complete 48 px Pro candidate redrawn at 40 px with `image_to_pixelart`. The fluffy and scruffy adults were made by inpainting only the fur inside the master's outline, and the master's outline was copied back in, so all three adults share one outline exactly. Actual heights are 34, 47 and 60 px (size guide: 32, 44, 56); `BODY_HEIGHTS` in `scene.ts` uses the actual heights.
 
-- [ ] **3.4 Faces.** For each of the five bodies, inpaint the face rectangle to make happy, sad, sick and sleeping (20 sprites, 9.4).
+- [x] **3.4 Faces.** For each of the five bodies, inpaint the face rectangle to make happy, sad, sick and sleeping (20 sprites, 9.4).
   Verify: the gallery body × face grid is complete; pixels outside the face rectangle match the content sprite (check with a quick `pngjs` diff).
+  Note: faces were inpainted with `inpaint_image_pro_flash` in each body's face rectangle (`FACE_RECTS` updated). The adult moods were made once on adult-normal and copied into the fluffy and scruffy bodies. The baby's content face was also inpainted, because its redrawn face was noisy. A pixel diff confirmed that nothing outside the face rectangles changed.
 
 - [x] **3.5 Layer extraction tool.** Create `tools/extract-layer.ts`.
   Verify: unit test: identical pixels become transparent, changed pixels are kept, mismatched sizes throw.
   Note: done early because it does not need PixelLab.
 
-- [ ] **3.6 Outfits.** Make all 16 outfit layers by inpainting onto the teen and adult-normal content sprites and extracting with the tool (9.4). Outfits must not cover the face rectangle.
+- [x] **3.6 Outfits.** Make all 16 outfit layers by inpainting onto the teen and adult-normal content sprites and extracting with the tool (9.4). Outfits must not cover the face rectangle.
   Verify: the gallery shows every outfit on every compatible body and face; faces stay visible; nothing floats or is misaligned on the fluffy and scruffy adults.
+  Note: all 16 outfits were inpainted with mask images that exclude the face rectangle and extracted with `tools/extract-layer.ts`. Isolated clusters under 8 px (6 px for teens) were removed. The suit and wizard hat needed hand colour overrides so navy and purple did not collapse to plum.
 
-- [ ] **3.7 Room.** Make `room.png` (128 × 128): pastel wall, window, wooden floor, round rug in the centre.
+- [x] **3.7 Room.** Make `room.png` (128 × 128): pastel wall, window, wooden floor, round rug in the centre.
   Verify: the scene with the master bunny at (32, 56) looks like the bunny sits on the rug.
+  Note: made by a helper agent. Lavender wall, curtained window, carrot picture, wood floor from row 94, pink rug centred at (64, 113); the dropping spots stay on bare floor.
 
-- [ ] **3.8 Items and effects.** Make `item-carrot`, `item-medicine`, `item-dropping`, `fx-heart`, `fx-sparkle`, `fx-zzz` (16 × 16) and `fx-rain-cloud` (32 × 16).
+- [x] **3.8 Items and effects.** Make `item-carrot`, `item-medicine`, `item-dropping`, `fx-heart`, `fx-sparkle`, `fx-zzz` (16 × 16) and `fx-rain-cloud` (32 × 16).
   Verify: gallery review.
+  Note: the medicine bottle, dropping, sparkle and Zzz were redrawn by hand at 16 px using the Pro candidates as a guide, because the generated 16 px candidates were muddy. The carrot, heart and rain cloud are generated, with small fixes.
 
-- [ ] **3.9 UI icons.** Make `icon-ball`, `icon-broom`, `icon-moon`, `icon-sun`, `icon-map`, `icon-hanger` and `icon-gear` (16 × 16).
+- [x] **3.9 UI icons.** Make `icon-ball`, `icon-broom`, `icon-moon`, `icon-sun`, `icon-map`, `icon-hanger` and `icon-gear` (16 × 16).
   Verify: gallery review; each icon is recognisable at 2× scale.
+  Note: the ball, broom, moon, sun, map and hanger were redrawn by hand at 16 px using the Pro candidates as a guide; the gear is generated. All use palette colours and plum outlines.
 
-- [ ] **3.10 Adventure icons.** Make the eight `adventure-<id>.png` icons (32 × 32).
+- [x] **3.10 Adventure icons.** Make the eight `adventure-<id>.png` icons (32 × 32).
   Verify: gallery review.
+  Note: all eight are generated with `create_image_pro` and mapped to the palette; bakery and pirate needed a few hand colour overrides.
 
-- [ ] **3.11 App and PWA icons.** Make `app-icon.png` (64 × 64). Create `tools/make-icons.ts` and the `icons` script to produce the four PWA icons in `public/icons/` (`PSD.md` 10.5).
+- [x] **3.11 App and PWA icons.** Make `app-icon.png` (64 × 64). Create `tools/make-icons.ts` and the `icons` script to produce the four PWA icons in `public/icons/` (`PSD.md` 10.5).
   Verify: `npm run icons` writes 192, 512, maskable 512 and apple-touch icons with crisp pixels.
   Note: `tools/make-icons.ts` and the `icons` script exist. Until `app-icon.png` exists, the script warns and uses a placeholder icon, so the PWA has valid icons. Re-run `npm run icons` after the app icon is made.
+  Note: `app-icon.png` is a `create_image_pro` close-up of the bunny's head on pink (candidate 0 of 16). `npm run icons` regenerated the four PWA icons from it.
 
-- [ ] **3.12 Final art pass. CHECKPOINT.** Make sure every sprite uses the palette and has the right size.
+- [x] **3.12 Final art pass. CHECKPOINT.** Make sure every sprite uses the palette and has the right size.
   Verify: `npm run check:sprites` passes with no missing sprites. Show the full gallery to the user and get approval.
+  Note: `npm run check:sprites` reports 65 of 65 ok and every sprite uses only `art/palette.png` colours. The user approved the full gallery on 2026-10-07.
 
 ## Phase 4: Features
 
@@ -233,8 +243,8 @@ Each task is end to end: logic with unit tests, then UI, then a manual check in 
 
 ## Notes
 
-- **Deploy URL:** (fill in after task 1.6)
-- **PixelLab tools available:** none yet. The PixelLab MCP server is not configured (task 1.7 is blocked).
+- **Deploy URL:** https://huipvandenende.github.io/bnuuy/ (repository https://github.com/huipvandenende/bnuuy)
+- **PixelLab tools available:** see the note under task 1.7. The user upgraded to Tier 1 (2,000 generations per cycle, 8 concurrent jobs). The art phase used 781 generations. Every sprite is logged in `art/ART_LOG.md`.
 - **Deviations and discoveries:**
   - Hosting moved from Cloudflare Pages to GitHub Pages (`PSD.md` 10.4). The game is served under `/bnuuy/`, also locally.
   - Work continued past the blocked checkpoints 1.6 and 1.7. Phases 2, 4 and most of 5 were built and verified with placeholder sprites (`PSD.md` 9.6). Tasks 3.1 and 3.5 were done early because they need no PixelLab art.

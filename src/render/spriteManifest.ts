@@ -22,11 +22,11 @@ export interface Rect {
   height: number;
 }
 
-const ADULT_FACE: Rect = { x: 21, y: 27, width: 22, height: 12 };
+const ADULT_FACE: Rect = { x: 20, y: 26, width: 24, height: 11 };
 
 export const FACE_RECTS: Record<BodyKey, Rect> = {
-  baby: { x: 22, y: 40, width: 20, height: 10 },
-  teen: { x: 23, y: 34, width: 18, height: 10 },
+  baby: { x: 23, y: 40, width: 18, height: 9 },
+  teen: { x: 23, y: 34, width: 19, height: 9 },
   'adult-fluffy': ADULT_FACE,
   'adult-normal': ADULT_FACE,
   'adult-scruffy': ADULT_FACE,
