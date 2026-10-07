@@ -49,9 +49,9 @@ describe('describeScene', () => {
     expect(describeScene(bunny, adultTime)).toBe('Clover, an adult bunny, is sleeping. The floor is clean.');
   });
 
-  test('describes an empty room while away', () => {
+  test('describes the adventure while away', () => {
     const bunny = makeBunny({ adventure: { id: 'garden-stroll', startedAt: teenTime, endsAt: teenTime + HOUR_MS } });
-    expect(describeScene(bunny, teenTime)).toBe('The room is empty. Clover is on Garden Stroll.');
+    expect(describeScene(bunny, teenTime)).toBe('Clover is on Garden Stroll, wearing the flower crown and looking happy.');
   });
 });
 
@@ -71,12 +71,17 @@ describe('sceneViewOf', () => {
       droppings: 4,
       asleep: false,
       depressed: true,
-      away: false,
+      adventure: null,
     });
   });
 
-  test('marks the bunny as away during an adventure', () => {
-    const bunny = makeBunny({ adventure: { id: 'beach-day', startedAt: teenTime, endsAt: teenTime + HOUR_MS } });
-    expect(sceneViewOf(bunny, teenTime)).toMatchObject({ body: 'teen', away: true });
+  test('shows the bunny happy in the reward outfit during an adventure', () => {
+    const bunny = makeBunny({
+      adventure: { id: 'beach-day', startedAt: teenTime, endsAt: teenTime + HOUR_MS },
+      needs: { hunger: 30, happiness: 30, cleanliness: 30, energy: 30 },
+      wardrobe: ['suit'],
+      equippedOutfit: 'suit',
+    });
+    expect(sceneViewOf(bunny, teenTime)).toMatchObject({ body: 'teen', mood: 'happy', outfit: 'sun-hat', adventure: 'beach-day' });
   });
 });

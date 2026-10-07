@@ -344,13 +344,7 @@ textarea {
   pointer-events: none;
 }
 
-.away-card {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  line-height: 1.4;
+.away-banner {
   text-align: center;
 }
 

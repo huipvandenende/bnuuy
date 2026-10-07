@@ -60,9 +60,8 @@ export function createHomeScreen(ctx: AppContext): Screen {
   const chips = el('div', { class: 'chips' }, sleepingChip, sickChip, downChip);
 
   const canvas = el('canvas', { class: 'pixel', attrs: { role: 'img' } });
-  const awayText = el('p');
-  const awayCard = el('div', { class: 'panel away-card' }, awayText);
-  const sceneWrap = el('div', { class: 'scene-wrap' }, canvas, awayCard);
+  const awayBanner = el('p', { class: 'banner away-banner' });
+  const sceneWrap = el('div', { class: 'scene-wrap' }, canvas);
   const scene = createScene(canvas);
 
   const bars: Record<keyof Needs, ReturnType<typeof createNeedBar>> = {
@@ -108,7 +107,7 @@ export function createHomeScreen(ctx: AppContext): Screen {
   const medicineButton = actionButton('Medicine', 'item-medicine', () => act({ type: 'medicine' }, 'medicine', 'medicine'));
   const actions = el('nav', { class: 'actions', attrs: { 'aria-label': 'Care' } }, feedButton, playButton, cleanButton, sleepButton, medicineButton);
 
-  const element = el('main', { class: 'screen home' }, header, chips, sceneWrap, needs, actions);
+  const element = el('main', { class: 'screen home' }, header, chips, awayBanner, sceneWrap, needs, actions);
 
   function showNextEvent(bunny: Bunny, now: number): void {
     const event = bunny.events[0];
@@ -139,9 +138,9 @@ export function createHomeScreen(ctx: AppContext): Screen {
 
       scene.setView(sceneViewOf(bunny, now));
       canvas.setAttribute('aria-label', describeScene(bunny, now));
-      setHidden(awayCard, !away);
+      setHidden(awayBanner, !away);
       if (bunny.adventure) {
-        setText(awayText, `${bunny.name} is on ${getAdventure(bunny.adventure.id).name}. Back in ${formatCountdown(bunny.adventure.endsAt - now)}.`);
+        setText(awayBanner, `${bunny.name} is on ${getAdventure(bunny.adventure.id).name}. Back in ${formatCountdown(bunny.adventure.endsAt - now)}.`);
       }
 
       for (const key of Object.keys(bars) as (keyof Needs)[]) bars[key].update(bunny.needs[key], away);

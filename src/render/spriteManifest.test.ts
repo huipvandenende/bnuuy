@@ -11,9 +11,9 @@ import {
 } from './spriteManifest';
 
 describe('spriteManifest', () => {
-  test('lists all 65 sprites with unique keys', () => {
-    expect(SPRITES).toHaveLength(65);
-    expect(new Set(SPRITES.map((sprite) => sprite.key)).size).toBe(65);
+  test('lists all 73 sprites with unique keys', () => {
+    expect(SPRITES).toHaveLength(73);
+    expect(new Set(SPRITES.map((sprite) => sprite.key)).size).toBe(73);
     expect(SPRITES.every((sprite) => sprite.file === `${sprite.key}.png`)).toBe(true);
   });
 

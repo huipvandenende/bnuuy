@@ -230,14 +230,28 @@ Each task is end to end: logic with unit tests, then UI, then a manual check in 
   Verify: screenshots show no horizontal scroll, readable text and a crisp scene.
   Note: verified with Playwright screenshots of every screen and dialog at 360, 390, 768 and 1280 px; `scrollWidth` equals the viewport width everywhere.
 
-- [ ] **5.6 Final deploy.** Ask the user to push `main`; the workflow deploys it.
+- [x] **5.6 Final deploy.** Ask the user to push `main`; the workflow deploys it.
   Verify: the live URL works, installs as a PWA and works offline after the first visit.
+  Note: pushed commit `133e2ad` on 2026-10-07; the workflow deployed it. The live site loads the real art without errors, activates its service worker and keeps an adopted bunny after an offline reload.
 
 - [ ] **5.7 Definition of done.** Go through every item in `PSD.md` section 12 and tick the ones that are verified.
   Verify: all items except the last are ticked.
 
 - [ ] **5.8 Phone test. CHECKPOINT.** Ask the user to install the game on their friend's phone and play for a day.
   Verify: the user confirms it works. Tick the last item in `PSD.md` section 12.
+
+## Phase 6: Adventure scenes (PSD 1.2)
+
+- [x] **6.1 Scene code.** While away, draw `scene-<adventureId>` instead of the room, hide the droppings, and draw the bunny with the happy face and the adventure's reward outfit (`PSD.md` 6.8). Replace the away card with a banner above the scene (6.3). Add the scene sprites to the manifest and the gallery.
+  Verify: unit tests for `sceneViewOf` and `describeScene` while away; `npm run typecheck`, `npm test` and `npm run test:e2e` pass.
+  Note: `SceneView.away` became `SceneView.adventure`. The Home away card became a banner above the scene. The gallery has an "Adventure scenes" section.
+
+- [x] **6.2 Scene art.** Make the eight `scene-<adventureId>.png` backgrounds (128 × 128) with PixelLab, with plain ground where the bunny sits. Log them in `art/ART_LOG.md`.
+  Verify: `npm run check:sprites` reports 73 ok; every scene uses only palette colours; the gallery shows each scene with a bunny in its outfit.
+  Note: 220 generations. Details and job ids in `art/ART_LOG.md`.
+
+- [ ] **6.3 Review. CHECKPOINT.** Show the eight scenes to the user.
+  Verify: the user approves them.
 
 ---
 

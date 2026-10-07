@@ -1,7 +1,7 @@
-import { getAdventure } from '../game/catalog';
+import { getAdventure, getOutfit } from '../game/catalog';
 import { droppingsCount, moodOf } from '../game/mood';
 import { stageAt } from '../game/stage';
-import type { Bunny, Mood, OutfitId, Stage } from '../game/types';
+import type { AdventureId, Bunny, Mood, OutfitId, Stage } from '../game/types';
 import {
   BOTTLE_MS,
   CLEAN_FADE_MS,
@@ -24,7 +24,7 @@ import {
   type Point,
 } from './animations';
 import { addRenderer } from './loop';
-import { bodyKeyFor, bunnySpriteKey, outfitSizeFor, outfitSpriteKey, type BodyKey } from './spriteManifest';
+import { adventureSceneKey, bodyKeyFor, bunnySpriteKey, outfitSizeFor, outfitSpriteKey, type BodyKey } from './spriteManifest';
 import { getSprite } from './sprites';
 
 export type OneShotAnimation = 'feed' | 'play' | 'clean' | 'medicine' | 'refuse';
@@ -36,7 +36,7 @@ export interface SceneView {
   droppings: number;
   asleep: boolean;
   depressed: boolean;
-  away: boolean;
+  adventure: AdventureId | null;
 }
 
 export interface Scene {
@@ -246,16 +246,15 @@ export function createScene(canvas: HTMLCanvasElement): Scene {
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, SCENE_SIZE, SCENE_SIZE);
-    ctx.drawImage(getSprite('room'), 0, 0);
+    ctx.drawImage(getSprite(view?.adventure ? adventureSceneKey(view.adventure) : 'room'), 0, 0);
     if (!view) {
       return;
     }
     const motion = !reducedMotion.matches;
     const animation = active?.name;
     const elapsed = elapsedFor(timeMs);
-    drawDroppings(view, elapsed, motion);
-    if (view.away) {
-      return;
+    if (!view.adventure) {
+      drawDroppings(view, elapsed, motion);
     }
     const dx = motion && animation === 'refuse' ? shakeOffset(elapsed) : 0;
     const hop = motion && animation === 'play' ? hopHeight(elapsed) : 0;
@@ -286,14 +285,15 @@ export function createScene(canvas: HTMLCanvasElement): Scene {
 }
 
 export function sceneViewOf(bunny: Bunny, now: number): SceneView {
+  const adventure = bunny.adventure?.id ?? null;
   return {
     body: bodyKeyFor(stageAt(bunny, now), bunny.adultVariant),
-    mood: moodOf(bunny),
-    outfit: bunny.equippedOutfit,
+    mood: adventure ? 'happy' : moodOf(bunny),
+    outfit: adventure ? getAdventure(adventure).outfitId : bunny.equippedOutfit,
     droppings: droppingsCount(bunny.needs.cleanliness),
     asleep: bunny.asleep,
     depressed: bunny.depressed,
-    away: bunny.adventure !== null,
+    adventure,
   };
 }
 
@@ -306,7 +306,8 @@ function floorSentence(droppings: number): string {
 
 export function describeScene(bunny: Bunny, now: number): string {
   if (bunny.adventure) {
-    return `The room is empty. ${bunny.name} is on ${getAdventure(bunny.adventure.id).name}.`;
+    const adventure = getAdventure(bunny.adventure.id);
+    return `${bunny.name} is on ${adventure.name}, wearing the ${getOutfit(adventure.outfitId).name.toLowerCase()} and looking happy.`;
   }
   const who = `${bunny.name}, ${STAGE_PHRASES[stageAt(bunny, now)]} bunny,`;
   const mood = moodOf(bunny);

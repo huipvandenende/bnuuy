@@ -1,6 +1,6 @@
 # bnuuy: Product Spec Document
 
-Version 1.1, 2026-10-07 (hosting moved from Cloudflare Pages to GitHub Pages). This document is the single source of truth for building bnuuy. It covers what to build, why, and how. The implementation checklist lives in `PSD_PROGRESS.md`.
+Version 1.2, 2026-10-07 (1.1: hosting moved from Cloudflare Pages to GitHub Pages; 1.2: adventure scenes show the bunny on its adventure). This document is the single source of truth for building bnuuy. It covers what to build, why, and how. The implementation checklist lives in `PSD_PROGRESS.md`.
 
 ---
 
@@ -358,7 +358,7 @@ All screens are mobile-first, portrait, single column, with a maximum content wi
 - **Action bar** (sticky at the bottom): Feed, Play, Clean, Sleep (or Wake), Medicine. Each button has a 16 × 16 pixel icon and a text label.
 - **States:**
   - Asleep: room darkened, all actions disabled except Wake.
-  - Away: empty room, a card over the scene: "<name> is on <adventure>. Back in 3 h 12 min." Need bars show frozen values with the label "Paused". All actions disabled.
+  - Away: the scene shows the adventure (6.8) with the bunny on it, and a banner above the scene says "<name> is on <adventure>. Back in 3 h 12 min." Need bars show frozen values with the label "Paused". All actions disabled.
   - Events queued: show the first event card as a modal (6.9).
 - **Refusals:** a speech bubble above the bunny for 2 seconds plus the head-shake animation.
 
@@ -400,6 +400,7 @@ All screens are mobile-first, portrait, single column, with a maximum content wi
 - **Scaling:** pick the largest whole-number scale in device pixels that fits the container width (`floor(containerCssWidth × devicePixelRatio / 128)`, minimum 1). Set the canvas backing size to 128 × scale and its CSS size to backing size ÷ devicePixelRatio. Set `imageSmoothingEnabled = false` and CSS `image-rendering: pixelated`.
 - **Draw order:** room background, droppings, bunny body+face sprite, outfit layer, effects, sleep overlay (`rgba(40, 30, 70, 0.55)` over the whole scene), Zzz effect on top of the overlay.
 - **Positions (scene pixels, top-left of sprite):** bunny 64 × 64 at (32, 56). Dropping slots (16 × 16): (6, 100), (106, 100), (14, 112), (98, 112), filled in that order.
+- **Away on an adventure:** the background is that adventure's scene (`scene-<adventureId>`) instead of the room, and no droppings are drawn. The bunny is drawn in full colour at the usual position, with the happy face and wearing the outfit that adventure rewards (even on the first trip), with the idle bob and the occasional happy sparkle.
 - **Programmatic animations** (no extra sprite frames):
   - Idle bob: bunny y offset alternates 0 and −1 every 600 ms.
   - Feed: carrot at (56, 84), shrinks in 3 steps over 900 ms.
@@ -411,7 +412,7 @@ All screens are mobile-first, portrait, single column, with a maximum content wi
   - Depressed: rain cloud bobs above the bunny's head.
   - Happy: an occasional sparkle near the bunny.
 - **Reduced motion:** if `prefers-reduced-motion: reduce`, skip bob, hops, shakes and floating effects. State changes still show instantly.
-- **Accessibility:** the canvas has an `aria-label` that describes the scene, for example "Clover, a teen bunny, looks happy. 2 droppings on the floor."
+- **Accessibility:** the canvas has an `aria-label` that describes the scene, for example "Clover, a teen bunny, looks happy. 2 droppings on the floor." While away: "Clover is on Garden Stroll, wearing the flower crown and looking happy."
 
 ### 6.9 Event cards
 A modal `<dialog>` with a small canvas preview, text and a "Yay!" button. Dismissing removes the event from the queue and saves.
@@ -608,13 +609,14 @@ All bunny and outfit sprites are 64 × 64 with the bunny sitting bottom-centred,
 | Bunny bodies × faces | `bunny-{baby,teen,adult-fluffy,adult-normal,adult-scruffy}-{happy,content,sad,sick,sleeping}.png` | 64 × 64 | 25 |
 | Outfit layers | `outfit-{outfitId}-{teen,adult}.png` | 64 × 64 | 16 |
 | Room | `room.png` (front view: pastel wall, window, wooden floor, round rug in the centre) | 128 × 128 | 1 |
+| Adventure scenes | `scene-{adventureId}.png` (front view of the adventure's place, ground from row 94, plain ground where the bunny sits) | 128 × 128 | 8 |
 | Items and effects | `item-carrot`, `item-medicine`, `item-dropping`, `fx-heart`, `fx-sparkle`, `fx-zzz` | 16 × 16 | 6 |
 | Rain cloud | `fx-rain-cloud` | 32 × 16 | 1 |
 | UI icons | `icon-ball`, `icon-broom`, `icon-moon`, `icon-sun`, `icon-map`, `icon-hanger`, `icon-gear` | 16 × 16 | 7 |
 | Adventure icons | `adventure-{adventureId}.png` | 32 × 32 | 8 |
 | App icon | `app-icon.png` (bunny face on pink) | 64 × 64 | 1 |
 
-Feed and Medicine buttons reuse `item-carrot` and `item-medicine` as icons. Total: 65 files in `src/assets/sprites/`.
+Feed and Medicine buttons reuse `item-carrot` and `item-medicine` as icons. Total: 73 files in `src/assets/sprites/`.
 
 Size guide within the 64 × 64 canvas: baby about 32 px tall (big head, tiny body), teen about 44 px (longer ears, slimmer), adult about 56 px. The three adult variants share the same pose and outline; only fur texture and shine differ.
 
@@ -729,7 +731,7 @@ Chromium with the `Pixel 7` device profile, against `npm run preview`, using `/b
 
 ### 11.3 Other checks
 - `npm run typecheck` passes with `strict: true`.
-- `npm run check:sprites` confirms all 65 sprites exist with the right sizes.
+- `npm run check:sprites` confirms all 73 sprites exist with the right sizes.
 - Manual: the sprite gallery looks right to the user.
 - Manual: Chrome DevTools > Application shows a valid manifest and an active service worker; reloading offline still works.
 - Manual: layout at 360, 390, 768 and 1280 px widths has no horizontal scroll and the scene stays crisp.
@@ -742,7 +744,7 @@ Chromium with the `Pixel 7` device profile, against `npm run preview`, using `/b
 The MVP is done when every item is true:
 
 - [ ] `npm run typecheck`, `npm test` and `npm run test:e2e` all pass.
-- [ ] `npm run check:sprites` passes; all 65 sprites are real PixelLab art (no placeholders).
+- [ ] `npm run check:sprites` passes; all 73 sprites are real PixelLab art (no placeholders).
 - [ ] The user approved the master bunny and the final sprite gallery.
 - [ ] Adopting, all five actions, all refusals, sleep, sickness, depression, growth and all eight adventures work as specified in section 8.
 - [ ] Needs keep changing while the game is closed, and the game catches up correctly when reopened.

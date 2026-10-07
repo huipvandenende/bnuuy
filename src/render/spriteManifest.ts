@@ -5,7 +5,7 @@ export type BodyKey = 'baby' | 'teen' | 'adult-fluffy' | 'adult-normal' | 'adult
 export const BODY_KEYS: readonly BodyKey[] = ['baby', 'teen', 'adult-fluffy', 'adult-normal', 'adult-scruffy'];
 export const MOODS: readonly Mood[] = ['happy', 'content', 'sad', 'sick', 'sleeping'];
 
-export type SpriteGroup = 'bunny' | 'outfit' | 'room' | 'item' | 'effect' | 'icon' | 'adventure' | 'app';
+export type SpriteGroup = 'bunny' | 'outfit' | 'room' | 'scene' | 'item' | 'effect' | 'icon' | 'adventure' | 'app';
 
 export interface SpriteSpec {
   key: string;
@@ -58,6 +58,10 @@ export function adventureIconKey(id: AdventureId): string {
   return `adventure-${id}`;
 }
 
+export function adventureSceneKey(id: AdventureId): string {
+  return `scene-${id}`;
+}
+
 function sprite(key: string, width: number, height: number, group: SpriteGroup): SpriteSpec {
   return { key, file: `${key}.png`, width, height, group };
 }
@@ -71,6 +75,7 @@ export const SPRITES: readonly SpriteSpec[] = [
   ...BODY_KEYS.flatMap((body) => MOODS.map((mood) => sprite(bunnySpriteKey(body, mood), 64, 64, 'bunny'))),
   ...OUTFIT_IDS.flatMap((outfit) => OUTFIT_SIZES.map((size) => sprite(outfitSpriteKey(outfit, size), 64, 64, 'outfit'))),
   sprite('room', 128, 128, 'room'),
+  ...ADVENTURE_IDS.map((id) => sprite(adventureSceneKey(id), 128, 128, 'scene')),
   ...ITEMS.map((key) => sprite(key, 16, 16, 'item')),
   ...EFFECTS.map((key) => sprite(key, 16, 16, 'effect')),
   sprite('fx-rain-cloud', 32, 16, 'effect'),

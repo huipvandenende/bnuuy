@@ -323,3 +323,25 @@ This file covers the 22 non-bunny sprites. The main agent merges it into `art/AR
 - `npm run check:sprites` reports all 22 files at the correct sizes.
 - The palette check shows every file in palette, with no semi-transparent pixels.
 - Screenshots were checked in the gallery (4× grid and live scenes with the feed, play, clean and medicine animations), on the home screen (icons at 2×) and on the adventures screen (icons at 2×).
+
+## Adventure scenes (PSD 1.2)
+
+Eight 128 x 128 backgrounds, `scene-<adventureId>.png`, made on 2026-10-07. 220 generations in total.
+
+- **Generation:** `create_image_pro`, 128 x 128, opaque, 4 candidates per call, 20 generations each. Style image `src/assets/sprites/room.png` with `style_copy` `["color_palette", "shading"]`. Reference image: a flat layout sketch (backdrop to row 89, ground line on rows 90 to 93, ground from row 94, a pale oval centred at (64, 113)) with usage "composition and layout only: keep the backdrop down to row 89, the ground line on rows 90 to 93, ground from row 94, and keep the light oval patch at the bottom centre empty and plain". Every prompt starts "cozy cute pixel art background scene for a pet bunny game, front view:" and ends "an empty patch ... in the centre bottom where a small character will sit, soft pastel colours, low contrast in the centre, dark plum outlines on objects, no characters, no animals, clean pixel art".
+- **Ground fill:** every candidate copied the sketch's oval as a blank patch, so it was replaced with `inpaint_image_pro_flash` (6 generations each, "Modify current layer") using an elliptical mask centred at (64, 113), 82 x 34 px, and a prompt describing that scene's ground ("plain soft green grass lawn continuing evenly ...", "the checkered tile floor continuing evenly ...", and so on).
+- **Clean-up (scratch script):** some fills left a thin curve where the oval's edge had been. Inside the fill area, clusters of colours that are uncommon in the ground of the same rows and at least 20 px wide were repainted with the most common nearby ground colour. On the pirate deck this would have erased the treasure chest, so only the leftover cream oval corners on rows 118 to 127 were repainted. Epic Quest needed no clean-up.
+- **Palette:** nearest palette colour in CIELAB for garden, office, wizard school, pirate, epic quest and space; nearest by "redmean" RGB distance for beach and bakery, which kept the beach's pink sky and yellow sand and the bakery's checkered floor.
+
+| Scene | Job | Chosen | Fill job |
+|---|---|---|---|
+| garden-stroll (tulips, picket fence, watering can) | `0e3b5eca-9ccb-47a5-b688-7f142c446322` | 1 | `5d95ff4d-96a6-4e5d-8643-bb833e4897e6` |
+| beach-day (umbrella, sandcastle, shells) | `16f33a91-f547-488d-9472-7dd981546f1b` | 1 | `aa1dccae-60a2-4c5f-915d-8fc354650ba6` |
+| bakery-shift (bread shelves, carrot cake, oven) | `39831868-23fa-4117-bab9-6417b67a41d5` | 0 | `978d9ff0-a2d1-44af-aec2-d7134bbe5783` |
+| office-job (desk, computer, mug, plant, city window) | `f1dee591-ba7c-4709-a20e-d8f4198b1d95` | 1 | `8b2b41b3-8942-475a-8693-0beabf17d9ee` |
+| wizard-school (bookshelf, moon window, candles, potions, owl) | `42597d09-ffc2-4eb0-8de3-2bcd80dd4c69` | 0 | `de4c341d-6357-4021-87a8-e3c48344ab00` |
+| pirate-voyage (sail, mast, chest, barrel, sea) | `1f320769-1c31-48bb-8453-51d9f8bc8097` | 0 | `5290453f-a6bc-4e4d-a5e9-a947995b9add` |
+| epic-quest (path through hills to a smoking volcano) | `78e17696-3063-45b2-a6e0-fce99d10b405` | 3 | `afc6bc31-0b75-4f6f-9f91-dbf550cc049f` |
+| space-mission (moon ground, ringed planet, Earth, rocket) | `ecfad0e6-6844-438c-b8ca-404946f0ef59` | 1 | `c5a73d00-bbae-4d0f-b87b-a38687d3c2dd` |
+
+Raw candidates are in `art/raw/scenes/<scene>-<index>.png`, fills in `<scene>-filled.png`, and cleaned versions before palette mapping in `<scene>-clean.png`.
