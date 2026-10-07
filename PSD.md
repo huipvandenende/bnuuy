@@ -1,6 +1,6 @@
 # bnuuy: Product Spec Document
 
-Version 1, 2026-10-07. This document is the single source of truth for building bnuuy. It covers what to build, why, and how. The implementation checklist lives in `PSD_PROGRESS.md`.
+Version 1.1, 2026-10-07 (hosting moved from Cloudflare Pages to GitHub Pages). This document is the single source of truth for building bnuuy. It covers what to build, why, and how. The implementation checklist lives in `PSD_PROGRESS.md`.
 
 ---
 
@@ -162,7 +162,7 @@ All use cases assume the game first catches up on time that passed (see section 
 | vite-plugin-pwa | Manifest, service worker and offline caching with little config. |
 | Vitest | Unit tests for the pure game logic. |
 | Playwright | One end-to-end test of the full flow in a mobile viewport. |
-| Cloudflare Pages + Wrangler | Free static hosting. Deploys from a local build without a git push. |
+| GitHub Pages + GitHub Actions | Free static hosting with HTTPS. A workflow builds and deploys on every push to `main`. |
 | PixelLab MCP | AI tool that produces real pixel art (grid-aligned, limited palette, transparent backgrounds). |
 | Pixelify Sans via `@fontsource/pixelify-sans` | Readable pixel font, self-hosted so it works offline. |
 | `pngjs` and `tsx` (dev only) | Small Node scripts that process sprites and icons. |
@@ -181,6 +181,8 @@ Use Node 22 LTS or newer.
 
 ```
 bnuuy/
+  .github/workflows/
+    deploy.yml             build and deploy to GitHub Pages
   index.html
   vite.config.ts
   playwright.config.ts
@@ -241,7 +243,7 @@ bnuuy/
 ### 4.5 Auth, external services, secrets
 - No auth and no accounts.
 - No runtime external services and no runtime environment variables.
-- Development-only services: PixelLab (via MCP, token in the user's Claude Code config) and Cloudflare (via `wrangler login`). See section 10.
+- Development-only services: PixelLab (via MCP, token in the user's Claude Code config) and GitHub (the user pushes to deploy). See section 10.
 
 ---
 
@@ -630,7 +632,7 @@ Size guide within the 64 × 64 canvas: baby about 32 px tall (big head, tiny bod
 - **Outfits never cover the face rectangle**, so every mood stays visible. The astronaut helmet is a clear glass bubble outline around the head.
 - **One palette.** Run `reduce_colors` with `art/palette.png` on every final sprite.
 - **Log everything** in `art/ART_LOG.md`: sprite key, tool, prompt, job id, and any manual fixes. This makes sprites reproducible.
-- **Review in the gallery.** After each group, open `/?dev=1#/dev/sprites`, take a screenshot with Playwright, look at it, and redo anything off-model or misaligned. Small fixes can be done by editing pixels with `pngjs`.
+- **Review in the gallery.** After each group, open `/bnuuy/?dev=1#/dev/sprites`, take a screenshot with Playwright, look at it, and redo anything off-model or misaligned. Small fixes can be done by editing pixels with `pngjs`.
 
 ### 9.5 Base prompt
 "cute chibi bunny, front view, sitting, cream white fur, pink inner ears and cheeks, dark plum outline, soft pastel shading, kawaii, clean pixel art, transparent background". Add stage and variant words:
@@ -650,7 +652,7 @@ Until a sprite exists, `sprites.ts` draws a placeholder: the expected size fille
 ### 10.1 Prerequisites
 - Node 22 LTS or newer, npm.
 - Claude Code with the PixelLab MCP server connected (section 9.1).
-- A free Cloudflare account. The user runs `! npx wrangler login` once, because it opens a browser.
+- A GitHub account and a public repository named `bnuuy`. On a free account, GitHub Pages only works for public repositories, so the code and these documents are public.
 
 ### 10.2 Environment variables
 None at runtime. Nothing secret is stored in the repository.
@@ -667,26 +669,29 @@ None at runtime. Nothing secret is stored in the repository.
 | `test:e2e` | `playwright test` |
 | `check:sprites` | `tsx tools/check-sprites.ts` |
 | `icons` | `tsx tools/make-icons.ts` |
-| `deploy` | `npm run build && wrangler pages deploy dist --project-name bnuuy --branch main` |
 
-`wrangler` is a dev dependency.
+There is no `deploy` script. Deploys run in GitHub Actions (10.4).
 
-### 10.4 First deploy
-```
-npx wrangler pages project create bnuuy --production-branch main
-npm run deploy
-```
-The site is served at `bnuuy.pages.dev`, or with a few random characters added if that name is taken. The deploy output prints the real URL. Record it in the notes of `PSD_PROGRESS.md`.
+### 10.4 Deploy
+- Vite's `base` is `/bnuuy/`, the repository name. The dev server and preview also serve the game at `/bnuuy/`.
+- `.github/workflows/deploy.yml` runs on every push to `main`, and by hand from the Actions tab. It runs `npm ci`, `npm test` and `npm run build`, uploads `dist` with `actions/upload-pages-artifact`, and publishes it with `actions/deploy-pages`.
+- First deploy, done once by the user:
+  1. Create a public repository named `bnuuy` on GitHub.
+  2. In the repository, open Settings > Pages and set Source to "GitHub Actions".
+  3. Run `git remote add origin <repository URL>` and `git push -u origin main`.
+  If the first workflow run fails because Pages was not enabled yet, rerun it from the Actions tab.
+- The site is served at `https://<username>.github.io/bnuuy/`. Record the URL in the notes of `PSD_PROGRESS.md`.
+- If the repository gets another name, change `base` in `vite.config.ts`, and `baseURL` and the `webServer` URL in `playwright.config.ts`, to match.
 
 ### 10.5 PWA
 - `vite-plugin-pwa` with `registerType: 'autoUpdate'`.
-- Manifest: `name` "bnuuy", `short_name` "bnuuy", `description` "A cozy pixel bunny to care for.", `display` "standalone", `orientation` "portrait", `start_url` "/", `background_color` `#FFF6EC`, `theme_color` `#E68AA8`.
+- Manifest: `name` "bnuuy", `short_name` "bnuuy", `description` "A cozy pixel bunny to care for.", `display` "standalone", `orientation` "portrait", `start_url` and `scope` "/bnuuy/" (both follow Vite's `base`), `background_color` `#FFF6EC`, `theme_color` `#E68AA8`.
 - Icons generated by `tools/make-icons.ts` from `app-icon.png` with nearest-neighbour scaling: `pwa-192x192.png` (×3), `pwa-512x512.png` (×8), `pwa-maskable-512x512.png` (bunny ×6 centred on a pink 512 × 512 square, inside the safe zone), and `apple-touch-icon.png` (192 × 192). Link the apple touch icon in `index.html`.
 - Workbox `globPatterns`: `**/*.{js,css,html,png,svg,woff2,webmanifest}`, so the game works offline.
 
 ### 10.6 Git
 - Initialise a git repository with a `.gitignore` (`node_modules`, `dist`, `test-results`, `playwright-report`).
-- Commit only when the user asks. Never push. No remote is needed, because deploys use Wrangler.
+- Commit only when the user asks. Claude Code never pushes. The user pushes `main` to deploy.
 
 ---
 
@@ -712,7 +717,7 @@ Game logic is pure, so tests pass explicit timestamps. Required coverage:
 - `tools/extract-layer.ts`: identical pixels become transparent, changed pixels are kept.
 
 ### 11.2 End-to-end test (Playwright, `e2e/flow.spec.ts`)
-Chromium with the `Pixel 7` device profile, against `npm run preview`, using `/?dev=1` so the time-skip panel is available. One test covers:
+Chromium with the `Pixel 7` device profile, against `npm run preview`, using `/bnuuy/?dev=1` so the time-skip panel is available. One test covers:
 1. Adopt "Clover"; Home shows the name and four full bars.
 2. Feed is refused at full tummy (bubble visible).
 3. Skip 4 h; feed works; droppings appear on the scene (check the canvas `aria-label`).
@@ -746,7 +751,7 @@ The MVP is done when every item is true:
 - [ ] A save code restores the exact bunny in a fresh browser profile.
 - [ ] Start over works and keeps the sound setting.
 - [ ] Sound is off by default and toggles in Settings.
-- [ ] The game is deployed to Cloudflare Pages and the URL is recorded in `PSD_PROGRESS.md`.
+- [ ] The game is deployed to GitHub Pages and the URL is recorded in `PSD_PROGRESS.md`.
 - [ ] The game is installable as a PWA and loads offline after the first visit.
 - [ ] Layout works from 360 px to desktop widths; pixels stay crisp.
 - [ ] `?dev=1` shows the dev panel; without it, no dev UI is visible.
