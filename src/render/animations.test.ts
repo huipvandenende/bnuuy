@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   bobOffset,
+  bowOffset,
   carrotSize,
   cloudOffset,
   fadeOut,
@@ -8,8 +9,11 @@ import {
   floatingHearts,
   happySparkle,
   hopHeight,
+  prayerCycle,
+  prayerElapsed,
   pulse,
   shakeOffset,
+  showsPrayerSparkle,
   zzzFloat,
 } from './animations';
 
@@ -73,5 +77,15 @@ describe('animations', () => {
     expect(happySparkle(400, spots)).toBeNull();
     expect(happySparkle(3100, spots)).toEqual({ x: 2, y: 2 });
     expect(happySparkle(6000, spots)).toEqual({ x: 1, y: 1 });
+  });
+
+  test('the bunny prays for the last 2 s of every 7 s', () => {
+    expect([0, 4999, 5000, 6999, 7000, 12000].map(prayerElapsed)).toEqual([null, null, 0, 1999, null, 0]);
+    expect([0, 6999, 7000, 14000].map(prayerCycle)).toEqual([0, 0, 1, 2]);
+  });
+
+  test('the prayer bows from 300 ms to 1700 ms and sparkles from 600 ms to 1400 ms', () => {
+    expect([0, 299, 300, 1699, 1700].map(bowOffset)).toEqual([0, 0, 1, 1, 0]);
+    expect([599, 600, 1399, 1400].map(showsPrayerSparkle)).toEqual([false, true, true, false]);
   });
 });

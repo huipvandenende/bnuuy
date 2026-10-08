@@ -1,4 +1,5 @@
 import type { Clock } from '../../clock';
+import { isSundayForced, setSundayForced } from '../../devFlags';
 import { DAY_MS, HOUR_MS, MINUTE_MS } from '../../game/constants';
 import { droppingsCount, moodOf } from '../../game/mood';
 import { stageAt } from '../../game/stage';
@@ -59,6 +60,14 @@ export function mountDevPanel(store: Store, clock: Clock): void {
     if (state.bunny) store.dispatch({ type: 'loadState', state: { ...state, bunny: change(state.bunny) } });
   }
 
+  const sundayInput = el('input', { attrs: { type: 'checkbox', role: 'switch' } });
+  sundayInput.checked = isSundayForced();
+  sundayInput.addEventListener('change', () => {
+    setSundayForced(sundayInput.checked);
+    store.tick();
+  });
+  const sundaySwitch = el('label', { class: 'switch' }, el('span', { text: 'Force Sunday' }), sundayInput, el('span', { class: 'switch-track', attrs: { 'aria-hidden': 'true' } }));
+
   const panel = el(
     'aside',
     { class: 'panel stack dev-panel', attrs: { 'aria-label': 'Developer tools' } },
@@ -78,6 +87,7 @@ export function mountDevPanel(store: Store, clock: Clock): void {
       ),
     ),
     el('div', { class: 'row' }, button('Make healthy', () => replaceBunny(healthy), 'button secondary'), button('Empty needs', () => replaceBunny(emptied), 'button secondary')),
+    sundaySwitch,
     el('a', { class: 'link', text: 'Sprite gallery', attrs: { href: routeHash('dev-sprites') } }),
   );
   panel.hidden = true;

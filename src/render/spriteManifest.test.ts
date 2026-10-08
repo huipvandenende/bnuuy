@@ -8,12 +8,14 @@ import {
   getSpriteSpec,
   outfitSizeFor,
   outfitSpriteKey,
+  prayingBodySpriteKey,
+  prayPawsSpriteKey,
 } from './spriteManifest';
 
 describe('spriteManifest', () => {
-  test('lists all 73 sprites with unique keys', () => {
-    expect(SPRITES).toHaveLength(73);
-    expect(new Set(SPRITES.map((sprite) => sprite.key)).size).toBe(73);
+  test('lists all 82 sprites with unique keys', () => {
+    expect(SPRITES).toHaveLength(82);
+    expect(new Set(SPRITES.map((sprite) => sprite.key)).size).toBe(82);
     expect(SPRITES.every((sprite) => sprite.file === `${sprite.key}.png`)).toBe(true);
   });
 
@@ -24,6 +26,9 @@ describe('spriteManifest', () => {
     expect(getSpriteSpec('fx-rain-cloud')).toMatchObject({ width: 32, height: 16 });
     expect(getSpriteSpec('adventure-space-mission')).toMatchObject({ width: 32, height: 32 });
     expect(getSpriteSpec('icon-gear')).toMatchObject({ width: 16, height: 16 });
+    expect(getSpriteSpec('room-church')).toMatchObject({ width: 128, height: 128, group: 'room' });
+    expect(getSpriteSpec('pray-paws-teen')).toMatchObject({ width: 64, height: 64, group: 'paws' });
+    expect(getSpriteSpec('bunny-adult-scruffy-praying')).toMatchObject({ width: 64, height: 64, group: 'bunny' });
   });
 
   test('throws on an unknown key', () => {
@@ -41,6 +46,14 @@ describe('spriteManifest', () => {
     expect(bunnySpriteKey('adult-scruffy', 'sick')).toBe('bunny-adult-scruffy-sick');
     expect(outfitSpriteKey('sun-hat', 'adult')).toBe('outfit-sun-hat-adult');
     expect(BODY_KEYS.map(outfitSizeFor)).toEqual([null, 'teen', 'adult', 'adult', 'adult']);
+    expect(prayingBodySpriteKey('teen')).toBe('bunny-teen-praying');
+    expect(BODY_KEYS.map(prayPawsSpriteKey)).toEqual([
+      'pray-paws-baby',
+      'pray-paws-teen',
+      'pray-paws-adult',
+      'pray-paws-adult',
+      'pray-paws-adult',
+    ]);
   });
 
   test('face rectangles fit inside the 64 x 64 sprite', () => {

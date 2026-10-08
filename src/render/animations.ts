@@ -47,6 +47,13 @@ const ZZZ_RISE = 8;
 export const HAPPY_SPARKLE_EVERY_MS = 3000;
 export const HAPPY_SPARKLE_MS = 400;
 
+export const PRAYER_EVERY_MS = 7000;
+export const PRAYER_MS = 2000;
+const BOW_START_MS = 300;
+const BOW_END_MS = 1700;
+const PRAYER_SPARKLE_START_MS = 600;
+const PRAYER_SPARKLE_END_MS = 1400;
+
 function isRunning(elapsedMs: number, durationMs: number): boolean {
   return elapsedMs >= 0 && elapsedMs < durationMs;
 }
@@ -122,4 +129,21 @@ export function happySparkle(timeMs: number, spots: readonly Point[]): Point | n
     return null;
   }
   return spots[Math.floor(timeMs / HAPPY_SPARKLE_EVERY_MS) % spots.length];
+}
+
+export function prayerElapsed(timeMs: number): number | null {
+  const elapsed = (timeMs % PRAYER_EVERY_MS) - (PRAYER_EVERY_MS - PRAYER_MS);
+  return elapsed >= 0 ? elapsed : null;
+}
+
+export function prayerCycle(timeMs: number): number {
+  return Math.floor(timeMs / PRAYER_EVERY_MS);
+}
+
+export function bowOffset(prayerMs: number): number {
+  return prayerMs >= BOW_START_MS && prayerMs < BOW_END_MS ? 1 : 0;
+}
+
+export function showsPrayerSparkle(prayerMs: number): boolean {
+  return prayerMs >= PRAYER_SPARKLE_START_MS && prayerMs < PRAYER_SPARKLE_END_MS;
 }

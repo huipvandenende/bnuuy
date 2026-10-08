@@ -1,6 +1,6 @@
 # bnuuy: Product Spec Document
 
-Version 1.2, 2026-10-07 (1.1: hosting moved from Cloudflare Pages to GitHub Pages; 1.2: adventure scenes show the bunny on its adventure). This document is the single source of truth for building bnuuy. It covers what to build, why, and how. The implementation checklist lives in `PSD_PROGRESS.md`.
+Version 1.3, 2026-10-08 (1.1: hosting moved from Cloudflare Pages to GitHub Pages; 1.2: adventure scenes show the bunny on its adventure; 1.3: Sunday church easter egg). This document is the single source of truth for building bnuuy. It covers what to build, why, and how. The implementation checklist lives in `PSD_PROGRESS.md`.
 
 ---
 
@@ -45,6 +45,7 @@ A cute, low-pressure companion that feels alive. The bunny keeps living while th
 - Installable PWA that works offline.
 - Developer-only tools: a time-skip panel and a sprite gallery, opened with `?dev=1`.
 - Pixel art made with the PixelLab MCP server.
+- Sunday easter egg (version 1.3): on Sundays the Home scene is a church, and the bunny says a little prayer every 7 seconds.
 
 ### Deferred (do not build now)
 - Notifications when the bunny needs care (needs a server for Web Push).
@@ -143,7 +144,13 @@ All use cases assume the game first catches up on time that passed (see section 
 ### UC16: Developer tools
 - **Actor:** the creator or the implementing agent.
 - **Trigger:** opens the game with `?dev=1` in the URL.
-- **Outcome:** a small "DEV" button opens a panel with time-skip buttons, need shortcuts and a link to the sprite gallery (`#/dev/sprites`).
+- **Outcome:** a small "DEV" button opens a panel with time-skip buttons, need shortcuts, a "Force Sunday" switch and a link to the sprite gallery (`#/dev/sprites`).
+
+### UC17: Sunday at church
+- **Actor:** player with a bunny that is home.
+- **Trigger:** opens the game on a Sunday, by the device's local time (00:00 to 23:59).
+- **Outcome:** the Home scene shows a cozy Catholic church interior instead of the room. Every 7 seconds the awake bunny closes its eyes, puts its paws together and bows slightly for 2 seconds, with a small sparkle above its head. On Monday the room returns.
+- **Not shown:** while the bunny is away (the adventure scene wins) and on the Adopt screen. An asleep bunny sleeps in the darkened church and does not pray.
 
 ---
 
@@ -203,6 +210,7 @@ bnuuy/
       actions.ts           feed, play, clean, sleep, wake, medicine, startAdventure, equip, unequip, adopt
       stage.ts             stage from age, adult variant from care
       mood.ts              mood and droppings from state
+      sunday.ts            isSunday(now) by local time
       validate.ts          name validation, state shape validation
       saveCode.ts          encode and decode save codes
       storage.ts           load and save with an injectable Storage
@@ -324,6 +332,7 @@ The stage is never stored. It is derived from `adoptedAt` and the current time.
 | `bnuuy:save` | JSON of `GameState` |
 | `bnuuy:save-broken` | Raw copy of a save that failed to load, kept for recovery |
 | `bnuuy:dev-time-offset` | Dev clock offset in ms (only set by the dev panel) |
+| `bnuuy:dev-force-sunday` | `"1"` when the dev panel's "Force Sunday" switch is on; missing otherwise |
 
 ### 5.4 Save code format
 `BNUUY1.<payload>.<checksum>`
@@ -353,7 +362,7 @@ All screens are mobile-first, portrait, single column, with a maximum content wi
 - **Purpose:** see and care for the bunny.
 - **Header:** name, stage and age (for example "Teen · 2 d 4 h"; adults show the variant, "Adult (Fluffy)"). Three icon buttons with text labels underneath: Adventures (map icon), Wardrobe (hanger icon), Settings (gear icon).
 - **Status chips** (below header, only when relevant): "Sleeping", "Sick: give medicine", "Feeling down: play to cheer up".
-- **Scene canvas:** the room with the bunny, droppings and effects (see 6.8).
+- **Scene canvas:** the room (the church on Sundays) with the bunny, droppings and effects (see 6.8).
 - **Need bars:** a 2 × 2 grid: Tummy, Happy, Clean, Energy. Each has an icon-free text label and a segmented pixel bar with 10 segments. Bars turn the danger colour below 25.
 - **Action bar** (sticky at the bottom): Feed, Play, Clean, Sleep (or Wake), Medicine. Each button has a 16 × 16 pixel icon and a text label.
 - **States:**
@@ -390,17 +399,25 @@ All screens are mobile-first, portrait, single column, with a maximum content wi
 
 ### 6.7 Dev tools (`?dev=1`)
 - **DEV button:** fixed bottom-right, small, only when the URL has `dev=1`.
-- **Panel:** current clock time and offset; a read-only readout of the needs (rounded), stage, mood, droppings, asleep, sick, depressed and adventure; buttons "+10 min", "+1 h", "+6 h", "+1 day", "+4 days"; "Make healthy" (all needs 100, awake, not sick, not depressed, zero timers reset); "Empty needs" (all needs 0); link "Sprite gallery".
+- **Panel:** current clock time and offset; a read-only readout of the needs (rounded), stage, mood, droppings, asleep, sick, depressed and adventure; buttons "+10 min", "+1 h", "+6 h", "+1 day", "+4 days"; "Make healthy" (all needs 100, awake, not sick, not depressed, zero timers reset); "Empty needs" (all needs 0); a "Force Sunday" switch (stored in `bnuuy:dev-force-sunday`, shows the church on any day); link "Sprite gallery".
 - **Time skip** adds to the clock offset, saves it to `bnuuy:dev-time-offset` and ticks the store, so the normal catch-up logic runs.
 - The gallery route only works when `dev=1` is in the URL.
-- **Sprite gallery (`#/dev/sprites`):** every sprite from the manifest at 4× scale with its key and size. Then a grid of every body × face combination. Then every outfit on every body and face it can be worn with. Then items, effects, icons and the room. Missing sprites show as placeholders with their key in red.
+- **Sprite gallery (`#/dev/sprites`):** every sprite from the manifest at 4× scale with its key and size. Then a grid of every body × face combination. Then every outfit on every body and face it can be worn with. Then items, effects, icons and the room. Then a "Sunday" section: the church with each body in the prayer pose, and the prayer pose with every outfit it can be worn with. Missing sprites show as placeholders with their key in red.
 
 ### 6.8 Scene rendering
 - **Logical size:** 128 × 128 scene pixels.
 - **Scaling:** pick the largest whole-number scale in device pixels that fits the container width (`floor(containerCssWidth × devicePixelRatio / 128)`, minimum 1). Set the canvas backing size to 128 × scale and its CSS size to backing size ÷ devicePixelRatio. Set `imageSmoothingEnabled = false` and CSS `image-rendering: pixelated`.
-- **Draw order:** room background, droppings, bunny body+face sprite, outfit layer, effects, sleep overlay (`rgba(40, 30, 70, 0.55)` over the whole scene), Zzz effect on top of the overlay.
+- **Draw order:** background (room, church or adventure scene), droppings, bunny body+face sprite, outfit layer, prayer paws layer (only while praying), effects, sleep overlay (`rgba(40, 30, 70, 0.55)` over the whole scene), Zzz effect on top of the overlay.
 - **Positions (scene pixels, top-left of sprite):** bunny 64 × 64 at (32, 56). Dropping slots (16 × 16): (6, 100), (106, 100), (14, 112), (98, 112), filled in that order.
 - **Away on an adventure:** the background is that adventure's scene (`scene-<adventureId>`) instead of the room, and no droppings are drawn. The bunny is drawn in full colour at the usual position, with the happy face and wearing the outfit that adventure rewards (even on the first trip), with the idle bob and the occasional happy sparkle.
+- **Sunday:** when the bunny is home and it is Sunday by the device's local time (`new Date(now).getDay() === 0`, with `now` from the clock module so the dev offset counts), or the dev "Force Sunday" switch is on, the background is `room-church` instead of `room`. Everything else stays the same: droppings, moods, effects, sleep overlay and one-shot animations.
+- **Prayer** (Sundays only):
+  - Timing: the bunny prays while `timeMs mod 7000` is 5000 or more. That is 2 seconds out of every 7.
+  - Pose: the body is drawn with `bunny-<body>-praying` whatever the mood: closed eyes, and a round lap with no front feet on the ground, because the front paws are raised. The `pray-paws-<shape>` layer is drawn on top of the outfit, so the paws stay visible over the suit or the cloak. The idle bob pauses.
+  - Bow: y offset +1 from 300 ms to 1700 ms into the prayer.
+  - Sparkle: `fx-sparkle` above the head from 600 ms to 1400 ms into the prayer.
+  - No prayer while asleep or while a one-shot animation plays. A one-shot animation that starts during a prayer ends the prayer at once.
+  - The rain cloud of a depressed bunny stays visible during the prayer.
 - **Programmatic animations** (no extra sprite frames):
   - Idle bob: bunny y offset alternates 0 and −1 every 600 ms.
   - Feed: carrot at (56, 84), shrinks in 3 steps over 900 ms.
@@ -411,8 +428,8 @@ All screens are mobile-first, portrait, single column, with a maximum content wi
   - Sleeping: Zzz rises and loops above the bunny's head.
   - Depressed: rain cloud bobs above the bunny's head.
   - Happy: an occasional sparkle near the bunny.
-- **Reduced motion:** if `prefers-reduced-motion: reduce`, skip bob, hops, shakes and floating effects. State changes still show instantly.
-- **Accessibility:** the canvas has an `aria-label` that describes the scene, for example "Clover, a teen bunny, looks happy. 2 droppings on the floor." While away: "Clover is on Garden Stroll, wearing the flower crown and looking happy."
+- **Reduced motion:** if `prefers-reduced-motion: reduce`, skip bob, hops, shakes and floating effects. State changes still show instantly. The prayer pose still shows, without the bow and the sparkle.
+- **Accessibility:** the canvas has an `aria-label` that describes the scene, for example "Clover, a teen bunny, looks happy. 2 droppings on the floor." While away: "Clover is on Garden Stroll, wearing the flower crown and looking happy." On Sundays: "Clover, a teen bunny, is at church and looks happy. 2 droppings on the floor." The label does not change during a prayer, so screen readers are not interrupted every 7 seconds.
 
 ### 6.9 Event cards
 A modal `<dialog>` with a small canvas preview, text and a "Yay!" button. Dismissing removes the event from the queue and saves.
@@ -573,6 +590,9 @@ In priority order:
 - **Name with emoji or HTML characters:** stored as is, always rendered with `textContent`.
 - **iOS Safari storage:** Safari may delete website data after 7 days without a visit. Installed home-screen apps are not affected. The app requests persistent storage, and the save code is the backup.
 - **Dev offset after leaving dev mode:** the offset stays in localStorage so timestamps remain consistent. It only exists on devices where `?dev=1` was used.
+- **Sunday starts or ends while the game is open:** the scene switches on the next render, without a reload.
+- **Time zones:** Sunday follows the device's local time. Travelling to another time zone moves the church day with the device.
+- **Force Sunday without dev mode:** the switch is only read when the URL has `dev=1`, so a leftover `bnuuy:dev-force-sunday` has no effect in normal play.
 
 ---
 
@@ -615,8 +635,11 @@ All bunny and outfit sprites are 64 × 64 with the bunny sitting bottom-centred,
 | UI icons | `icon-ball`, `icon-broom`, `icon-moon`, `icon-sun`, `icon-map`, `icon-hanger`, `icon-gear` | 16 × 16 | 7 |
 | Adventure icons | `adventure-{adventureId}.png` | 32 × 32 | 8 |
 | App icon | `app-icon.png` (bunny face on pink) | 64 × 64 | 1 |
+| Church | `room-church.png` (front view of a cozy Catholic church interior, same layout as the adventure scenes) | 128 × 128 | 1 |
+| Praying bodies | `bunny-{baby,teen,adult-fluffy,adult-normal,adult-scruffy}-praying.png` (sleeping face, round lap without front feet) | 64 × 64 | 5 |
+| Prayer paws | `pray-paws-{baby,teen,adult}.png` (front paws pressed together in front of the chest; the adult layer serves all three adult variants) | 64 × 64 | 3 |
 
-Feed and Medicine buttons reuse `item-carrot` and `item-medicine` as icons. Total: 73 files in `src/assets/sprites/`.
+Feed and Medicine buttons reuse `item-carrot` and `item-medicine` as icons. Total: 82 files in `src/assets/sprites/`.
 
 Size guide within the 64 × 64 canvas: baby about 32 px tall (big head, tiny body), teen about 44 px (longer ears, slimmer), adult about 56 px. The three adult variants share the same pose and outline; only fur texture and shine differ.
 
@@ -646,6 +669,13 @@ Size guide within the 64 × 64 canvas: baby about 32 px tall (big head, tiny bod
 
 ### 9.6 Placeholders
 Until a sprite exists, `sprites.ts` draws a placeholder: the expected size filled with `--pink`, a 1 px `--plum` border and the first letter of the key. Features can be built and tested before all art is done.
+
+### 9.7 Sunday art (version 1.3)
+- **Budget:** at most 150 generations for the church and the paws together. On 2026-10-08 the account had 1,010 generations left; the allowance refills on 2026-11-07. Check `get_balance` before starting. If the budget runs out, stop and ask the user.
+- **Church (`room-church`):** use the method of the adventure scenes in `art/ART_LOG.md`. That is `create_image_pro`, 128 × 128, opaque, with `room.png` as style image (`style_copy` `["color_palette", "shading"]`) and the same layout sketch as reference image. The sketch file was not kept, so recreate it from its description in `art/ART_LOG.md` and save it as `art/layout-sketch.png`. Then fill the plain ground patch with `inpaint_image_pro_flash`. Prompt: "cozy cute pixel art background scene for a pet bunny game, front view: the inside of a small Catholic church, an altar with a white cloth and a simple golden cross, a round stained-glass rose window in soft pastel colours, tall lit candles, wooden pews along the left and right edges, warm soft light, a stone floor with an empty patch in the centre bottom where a small character will sit, soft pastel colours, low contrast in the centre, dark plum outlines on objects, no characters, no people, no animals, no text, clean pixel art". The church is drawn with respect: no jokes or odd details in the art itself.
+- **Prayer paws (`pray-paws-<shape>`):** for each shape, inpaint the chest of `bunny-baby-sleeping`, `bunny-teen-sleeping` and `bunny-adult-normal-sleeping` with `inpaint_image_pro_flash`. Use a rectangle mask directly below the face rectangle that never overlaps it. Prompt: "the bunny's two front paws raised and pressed together in prayer in front of its chest, cream fur, pink paw pads, dark plum outline, pixel art". Then run `tools/extract-layer.ts` against the same base. The layer keeps only the paws and their outline; remove any other changed pixels with `pixelart_workbench`, which is free. If inpainting fails twice for a shape, draw the paws by hand with `pixelart_workbench`.
+- **Praying bodies (`bunny-<body>-praying`):** stack the paws layer on the sleeping sprite of baby, teen and adult-normal. Inpaint the front legs between the hind feet with `inpaint_image_pro_flash` ("soft round fluffy belly and lap resting on the ground ... no front feet"). For the fluffy and scruffy adults, copy the pixels that changed on adult-normal; on scruffy, shift each fur tone one step darker. Outfit layers must not draw anything in the lap below the garment, or the legs show again.
+- **Checks:** the paws never cover the face rectangle; they line up on the fluffy, normal and scruffy adults; they read well over every outfit; no front feet show in the prayer pose. Run `reduce_colors` with `art/palette.png` and log every call in `art/ART_LOG.md`.
 
 ---
 
@@ -717,6 +747,10 @@ Game logic is pure, so tests pass explicit timestamps. Required coverage:
 - Storage: load, save, broken save is copied to `bnuuy:save-broken`, missing storage handled (use a fake `Storage` object).
 - Name validation.
 - `tools/extract-layer.ts`: identical pixels become transparent, changed pixels are kept.
+- Sunday: `isSunday` is false on Saturday 23:59 and Monday 00:00, and true on Sunday 00:00 and 23:59. Build the dates with the local `Date` constructor (for example `new Date(2026, 9, 11)`, a Sunday) so the tests pass in any time zone.
+- `sceneViewOf`: church background on a Sunday at home; no church while away; "Force Sunday" gives the church on a weekday.
+- `describeScene` on a Sunday mentions the church and still reports the droppings.
+- Prayer timing: not praying at 0 ms and 4,999 ms; praying at 5,000 ms and 6,999 ms; not praying at 7,000 ms; never while asleep or during a one-shot animation.
 
 ### 11.2 End-to-end test (Playwright, `e2e/flow.spec.ts`)
 Chromium with the `Pixel 7` device profile, against `npm run preview`, using `/bnuuy/?dev=1` so the time-skip panel is available. One test covers:
@@ -729,9 +763,11 @@ Chromium with the `Pixel 7` device profile, against `npm run preview`, using `/b
 7. Settings: copy the save code (read it from the textarea), start over, Adopt screen appears.
 8. Load the code on the Adopt screen; Clover is back with the flower crown.
 
+The test must pass on every day of the week. No assertion may depend on the church background or the prayer.
+
 ### 11.3 Other checks
 - `npm run typecheck` passes with `strict: true`.
-- `npm run check:sprites` confirms all 73 sprites exist with the right sizes.
+- `npm run check:sprites` confirms all 82 sprites exist with the right sizes.
 - Manual: the sprite gallery looks right to the user.
 - Manual: Chrome DevTools > Application shows a valid manifest and an active service worker; reloading offline still works.
 - Manual: layout at 360, 390, 768 and 1280 px widths has no horizontal scroll and the scene stays crisp.
@@ -758,6 +794,16 @@ The MVP is done when every item is true:
 - [x] Layout works from 360 px to desktop widths; pixels stay crisp.
 - [x] `?dev=1` shows the dev panel; without it, no dev UI is visible.
 - [x] The user confirmed it works on the friend's phone.
+
+Version 1.3 (Sunday easter egg) is done when every item is true:
+
+- [x] `npm run typecheck`, `npm test` and `npm run test:e2e` all pass.
+- [x] `npm run check:sprites` passes with 82 sprites; the church, the five praying bodies and the three paws layers are real PixelLab art.
+- [x] On a Sunday (or with "Force Sunday"), Home shows the church, and the awake bunny prays every 7 seconds as specified in 6.8.
+- [x] The paws show correctly with every body and every outfit in the sprite gallery.
+- [x] On other days, and while the bunny is away, nothing changes.
+- [x] The Sunday art used at most 150 generations.
+- [x] The user approved the church and the prayer.
 
 ---
 

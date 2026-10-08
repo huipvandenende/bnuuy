@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { ADULT_AGE_MS, HOUR_MS, TEEN_AGE_MS } from '../game/constants';
 import type { Bunny } from '../game/types';
-import { describeScene, sceneViewOf } from './scene';
+import { describeScene, prayerElapsedFor, sceneViewOf, type SceneView } from './scene';
 
 const ADOPTED_AT = 1_000_000;
 
@@ -53,6 +53,17 @@ describe('describeScene', () => {
     const bunny = makeBunny({ adventure: { id: 'garden-stroll', startedAt: teenTime, endsAt: teenTime + HOUR_MS } });
     expect(describeScene(bunny, teenTime)).toBe('Clover is on Garden Stroll, wearing the flower crown and looking happy.');
   });
+
+  test('mentions the church on a church day and still reports droppings', () => {
+    const bunny = makeBunny({ needs: { hunger: 100, happiness: 100, cleanliness: 50, energy: 100 } });
+    expect(describeScene(bunny, teenTime, true)).toBe('Clover, a teen bunny, is at church and looks content. 2 droppings on the floor.');
+    expect(describeScene(makeBunny({ asleep: true }), teenTime, true)).toBe('Clover, a teen bunny, is sleeping at church. The floor is clean.');
+  });
+
+  test('the adventure wins over the church', () => {
+    const bunny = makeBunny({ adventure: { id: 'garden-stroll', startedAt: teenTime, endsAt: teenTime + HOUR_MS } });
+    expect(describeScene(bunny, teenTime, true)).toBe('Clover is on Garden Stroll, wearing the flower crown and looking happy.');
+  });
 });
 
 describe('sceneViewOf', () => {
@@ -72,6 +83,7 @@ describe('sceneViewOf', () => {
       asleep: false,
       depressed: true,
       adventure: null,
+      church: false,
     });
   });
 
@@ -83,5 +95,36 @@ describe('sceneViewOf', () => {
       equippedOutfit: 'suit',
     });
     expect(sceneViewOf(bunny, teenTime)).toMatchObject({ body: 'teen', mood: 'happy', outfit: 'sun-hat', adventure: 'beach-day' });
+  });
+
+  test('shows the church on a church day at home, but not while away', () => {
+    expect(sceneViewOf(makeBunny(), teenTime, true).church).toBe(true);
+    expect(sceneViewOf(makeBunny(), teenTime).church).toBe(false);
+    const away = makeBunny({ adventure: { id: 'beach-day', startedAt: teenTime, endsAt: teenTime + HOUR_MS } });
+    expect(sceneViewOf(away, teenTime, true)).toMatchObject({ church: false, adventure: 'beach-day' });
+  });
+});
+
+describe('prayerElapsedFor', () => {
+  const churchView: SceneView = {
+    body: 'teen',
+    mood: 'happy',
+    outfit: 'suit',
+    droppings: 0,
+    asleep: false,
+    depressed: false,
+    adventure: null,
+    church: true,
+  };
+
+  test('prays in the church during the prayer window', () => {
+    expect(prayerElapsedFor(churchView, 5000, false)).toBe(0);
+    expect(prayerElapsedFor(churchView, 4999, false)).toBeNull();
+  });
+
+  test('never prays outside the church, while asleep or when interrupted by an animation', () => {
+    expect(prayerElapsedFor({ ...churchView, church: false }, 5000, false)).toBeNull();
+    expect(prayerElapsedFor({ ...churchView, asleep: true }, 5000, false)).toBeNull();
+    expect(prayerElapsedFor(churchView, 5000, true)).toBeNull();
   });
 });

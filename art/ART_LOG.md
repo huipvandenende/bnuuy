@@ -345,3 +345,40 @@ Eight 128 x 128 backgrounds, `scene-<adventureId>.png`, made on 2026-10-07. 220 
 | space-mission (moon ground, ringed planet, Earth, rocket) | `ecfad0e6-6844-438c-b8ca-404946f0ef59` | 1 | `c5a73d00-bbae-4d0f-b87b-a38687d3c2dd` |
 
 Raw candidates are in `art/raw/scenes/<scene>-<index>.png`, fills in `<scene>-filled.png`, and cleaned versions before palette mapping in `<scene>-clean.png`.
+
+## Sunday church (PSD 1.3)
+
+Made on 2026-10-08. 56 generations in total (balance 1,010 before, 954 after), including the praying bodies added after user feedback.
+
+### room-church
+
+- **Layout sketch:** the original sketch was not kept, so it was recreated from the description above as `art/layout-sketch.png` (backdrop `#D5C6EF` to row 89, ground line `#7A6A80` on rows 90 to 93, ground `#C99A7A` from row 94, a `#F6E6D3` oval of 72 x 28 px centred at (64, 113)).
+- **Generation:** `create_image_pro`, 128 x 128, opaque, seed 701, style image `room.png` with `style_copy` `["color_palette", "shading"]`, the sketch as reference with the same usage text as the adventure scenes. Prompt: the church prompt in PSD 9.7. Job `3231c061-b75f-4280-9d1f-de0ae8e9e61e`, 20 generations. Chosen: candidate 0 (rose window, gold cross, candelabras, altar with white cloth, pews at both sides).
+- **Ground fill:** `inpaint_image_pro_flash`, "Modify current layer", seed 721, elliptical mask centred at (64, 113), 82 x 34 px. Prompt: "the warm brown wooden church floor of the aisle continuing evenly, plain smooth floor boards in soft brown tones, no patch, no rug, no objects, clean pixel art". Job `0c158849-c1b2-4b30-861d-efe38414e90a`, 6 generations.
+- **Palette and clean-up:** nearest palette colour by "redmean" RGB distance (the pale blue glass became mint). Eight leftover oval pixels (`#F6E6D3`) on rows 126 and 127 were repainted with the floor colour `#C99A6E`.
+- Raw files: `art/raw/church/church-<index>.png` and `church-0-filled.png`.
+
+### pray-paws-baby, pray-paws-teen, pray-paws-adult
+
+- **Inpainting:** `inpaint_image_pro_flash` on the sleeping sprite of each shape, rectangle mask directly below the face rectangle, 5 generations each. Prompt: "the bunny's two front paws raised and pressed together in prayer in front of its chest, cream fur, pink paw pads, dark plum outline, pixel art" ("the baby bunny's two tiny front paws ..." for the baby).
+  - adult (`bunny-adult-normal-sleeping`): mask x 22, y 38, 20 x 14, seed 711, job `6753d7ed-11c5-4637-96ab-cbb621001ec3`
+  - teen (`bunny-teen-sleeping`): mask x 24, y 43, 18 x 11, seed 712, job `a8c4a3b4-1873-4e51-aa48-cc64ff12b62b`
+  - baby (`bunny-baby-sleeping`): mask x 24, y 49, 16 x 9, seed 713, job `94e7b0e4-23df-4050-a0ab-fcd7dd1bc0c3`
+- **Layer:** each result was mapped to the nearest palette colours (`*-palette.png`). `tools/extract-layer.ts` kept only changed pixels, so paw fills that matched the fur behind them were missing and the paws looked hollow over outfits (`*-layer.png`). The final layers therefore copy the full paw shape from the palette-mapped result, row by row, and close it with a plum (`#4A3B4F`) outline on both ends of every row and one row below. The long forearm lines were left out, so the paws read as a small closed shape over any outfit.
+  - adult: rows 38 to 44 (tips at x 30 and 33, widest x 26 to 38), bottom outline row 45, x 27 to 37
+  - teen: rows 44 to 49 (tips at x 30 and 33, widest x 27 to 36), bottom outline row 50, x 28 to 35
+  - baby: rows 49 to 52 (tips at x 30 and 33, widest x 27 to 36), bottom outline row 53, x 28 to 35
+- None of the layers overlap a face rectangle. The adult layer was checked on the fluffy, normal and scruffy adults, and every layer with every outfit, in the gallery.
+- Raw files: `art/raw/paws/`.
+
+### bunny-<body>-praying (user feedback)
+
+The user found the prayer pose goofy because the front feet stayed on the ground while the paws were raised. Each body got a praying variant with a round lap instead of front legs.
+
+- **Inpainting:** the paws layer was stacked on each sleeping sprite (`art/raw/praying/<body>-paws.png`), then `inpaint_image_pro_flash` replaced the front legs between the hind feet, 5 generations each. Prompt: "the bunny's soft round fluffy belly and lap resting on the ground, smooth cream fur with soft shading, no front feet and no front legs on the ground because its paws are raised, a simple rounded bottom edge with a dark plum outline between the hind feet, pixel art" (baby: "the baby bunny's ... tiny paws ...").
+  - adult-normal: mask x 24, y 46, 16 x 15, seed 731, job `650c115d-4192-4fab-83e2-ee20fdeffa2c`
+  - teen: mask x 25, y 51, 14 x 10, seed 732, job `14a466ff-606f-42a2-9174-179426030720`
+  - baby: mask x 25, y 54, 14 x 6, seed 733, job `bcd209bd-a9a5-4b94-a085-10f76b5f805d`
+- **Palette and fixes:** nearest palette colours by "redmean" distance. On adult-normal, the inpaint left the bottom outline open on row 59 at x 24 to 26 and 37 to 39; those pixels were set to `#2E2333` like the neighbouring outline.
+- **Fluffy and scruffy:** the 93 pixels that changed on adult-normal (inside the mask) were copied onto the fluffy and scruffy sleeping sprites with the paws stacked on top. For scruffy, `#FFF6EC` became `#EFE3D6`, `#EFE3D6` became `#D9C8BA` and `#D9C8BA` became `#B8A79E`.
+- **Outfit clean-up:** some outfit layers had stray pixels on the old front-leg lines, below the garment. They drew the legs back over the new lap, so they were removed: `outfit-suit-teen` (x 24 to 38, rows 55 to 60, 23 pixels), `outfit-suit-adult` (x 24 to 39, rows 57 to 60, keeping the tie tip at x 30 to 33 on row 57, 29 pixels) and `outfit-hobbit-cloak-teen` (x 27 to 36, rows 53 to 60, 9 pixels). The other outfit layers have no pixels in the lap. The originals are in `art/raw/outfits/before-lap-cleanup/`.

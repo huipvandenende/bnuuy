@@ -5,7 +5,7 @@ export type BodyKey = 'baby' | 'teen' | 'adult-fluffy' | 'adult-normal' | 'adult
 export const BODY_KEYS: readonly BodyKey[] = ['baby', 'teen', 'adult-fluffy', 'adult-normal', 'adult-scruffy'];
 export const MOODS: readonly Mood[] = ['happy', 'content', 'sad', 'sick', 'sleeping'];
 
-export type SpriteGroup = 'bunny' | 'outfit' | 'room' | 'scene' | 'item' | 'effect' | 'icon' | 'adventure' | 'app';
+export type SpriteGroup = 'bunny' | 'outfit' | 'paws' | 'room' | 'scene' | 'item' | 'effect' | 'icon' | 'adventure' | 'app';
 
 export interface SpriteSpec {
   key: string;
@@ -54,6 +54,14 @@ export function outfitSpriteKey(outfit: OutfitId, size: 'teen' | 'adult'): strin
   return `outfit-${outfit}-${size}`;
 }
 
+export function prayingBodySpriteKey(body: BodyKey): string {
+  return `bunny-${body}-praying`;
+}
+
+export function prayPawsSpriteKey(body: BodyKey): string {
+  return `pray-paws-${outfitSizeFor(body) ?? 'baby'}`;
+}
+
 export function adventureIconKey(id: AdventureId): string {
   return `adventure-${id}`;
 }
@@ -82,6 +90,9 @@ export const SPRITES: readonly SpriteSpec[] = [
   ...ICONS.map((key) => sprite(key, 16, 16, 'icon')),
   ...ADVENTURE_IDS.map((id) => sprite(adventureIconKey(id), 32, 32, 'adventure')),
   sprite('app-icon', 64, 64, 'app'),
+  sprite('room-church', 128, 128, 'room'),
+  ...BODY_KEYS.map((body) => sprite(prayingBodySpriteKey(body), 64, 64, 'bunny')),
+  ...(['baby', 'teen', 'adult'] as const).map((shape) => sprite(`pray-paws-${shape}`, 64, 64, 'paws')),
 ];
 
 const SPRITES_BY_KEY = new Map(SPRITES.map((spec) => [spec.key, spec]));

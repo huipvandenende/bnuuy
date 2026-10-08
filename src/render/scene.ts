@@ -12,19 +12,32 @@ import {
   PLAY_MS,
   SHAKE_MS,
   bobOffset,
+  bowOffset,
   carrotSize,
   cloudOffset,
   fadeOut,
   floatingHearts,
   happySparkle,
   hopHeight,
+  prayerCycle,
+  prayerElapsed,
   pulse,
   shakeOffset,
+  showsPrayerSparkle,
   zzzFloat,
   type Point,
 } from './animations';
 import { addRenderer } from './loop';
-import { adventureSceneKey, bodyKeyFor, bunnySpriteKey, outfitSizeFor, outfitSpriteKey, type BodyKey } from './spriteManifest';
+import {
+  adventureSceneKey,
+  bodyKeyFor,
+  bunnySpriteKey,
+  outfitSizeFor,
+  outfitSpriteKey,
+  prayingBodySpriteKey,
+  prayPawsSpriteKey,
+  type BodyKey,
+} from './spriteManifest';
 import { getSprite } from './sprites';
 
 export type OneShotAnimation = 'feed' | 'play' | 'clean' | 'medicine' | 'refuse';
@@ -37,6 +50,7 @@ export interface SceneView {
   asleep: boolean;
   depressed: boolean;
   adventure: AdventureId | null;
+  church: boolean;
 }
 
 export interface Scene {
@@ -118,6 +132,14 @@ function drawSprite(ctx: CanvasRenderingContext2D, key: string, point: Point, al
   ctx.globalAlpha = 1;
 }
 
+function drawBodyAndOutfit(ctx: CanvasRenderingContext2D, bodyKey: string, body: BodyKey, outfit: OutfitId | null, x: number, y: number): void {
+  ctx.drawImage(getSprite(bodyKey), x, y);
+  const size = outfitSizeFor(body);
+  if (outfit && size) {
+    ctx.drawImage(getSprite(outfitSpriteKey(outfit, size)), x, y);
+  }
+}
+
 export function drawBunny(
   ctx: CanvasRenderingContext2D,
   body: BodyKey,
@@ -126,11 +148,32 @@ export function drawBunny(
   x: number,
   y: number,
 ): void {
-  ctx.drawImage(getSprite(bunnySpriteKey(body, mood)), x, y);
-  const size = outfitSizeFor(body);
-  if (outfit && size) {
-    ctx.drawImage(getSprite(outfitSpriteKey(outfit, size)), x, y);
+  drawBodyAndOutfit(ctx, bunnySpriteKey(body, mood), body, outfit, x, y);
+}
+
+export function drawPrayingBunny(
+  ctx: CanvasRenderingContext2D,
+  body: BodyKey,
+  outfit: OutfitId | null,
+  x: number,
+  y: number,
+): void {
+  drawBodyAndOutfit(ctx, prayingBodySpriteKey(body), body, outfit, x, y);
+  ctx.drawImage(getSprite(prayPawsSpriteKey(body)), x, y);
+}
+
+export function prayerElapsedFor(view: SceneView, timeMs: number, interrupted: boolean): number | null {
+  if (!view.church || view.asleep || interrupted) {
+    return null;
   }
+  return prayerElapsed(timeMs);
+}
+
+function backgroundKey(view: SceneView | null): string {
+  if (view?.adventure) {
+    return adventureSceneKey(view.adventure);
+  }
+  return view?.church ? 'room-church' : 'room';
 }
 
 export function fitCanvas(
@@ -163,6 +206,7 @@ export function createScene(canvas: HTMLCanvasElement): Scene {
   let scale = fitCanvas(canvas, SCENE_SIZE, SCENE_SIZE, canvas.parentElement?.clientWidth ?? SCENE_SIZE);
   let view: SceneView | null = null;
   let active: ActiveAnimation | null = null;
+  let interruptedPrayer: number | null = null;
 
   const observer = new ResizeObserver(([entry]) => {
     scale = fitCanvas(canvas, SCENE_SIZE, SCENE_SIZE, entry.contentRect.width);
@@ -220,13 +264,13 @@ export function createScene(canvas: HTMLCanvasElement): Scene {
     }
   }
 
-  function drawMoodEffects(current: SceneView, timeMs: number, motion: boolean): void {
+  function drawMoodEffects(current: SceneView, timeMs: number, motion: boolean, praying: boolean): void {
     const top = headTop(current.body);
     if (current.depressed && !current.asleep) {
       const bob = motion ? cloudOffset(timeMs) : 0;
       drawSprite(ctx, 'fx-rain-cloud', { x: bunnyCentreX() - CLOUD_WIDTH / 2, y: top - 20 + bob });
     }
-    if (current.mood === 'happy' && motion) {
+    if (current.mood === 'happy' && motion && !praying) {
       const spot = happySparkle(timeMs, sparkleSpots(current.body));
       if (spot) {
         drawSprite(ctx, 'fx-sparkle', spot);
@@ -246,22 +290,33 @@ export function createScene(canvas: HTMLCanvasElement): Scene {
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, SCENE_SIZE, SCENE_SIZE);
-    ctx.drawImage(getSprite(view?.adventure ? adventureSceneKey(view.adventure) : 'room'), 0, 0);
+    ctx.drawImage(getSprite(backgroundKey(view)), 0, 0);
     if (!view) {
       return;
     }
     const motion = !reducedMotion.matches;
     const animation = active?.name;
     const elapsed = elapsedFor(timeMs);
+    if (animation && prayerElapsed(timeMs) !== null) {
+      interruptedPrayer = prayerCycle(timeMs);
+    }
+    const prayer = prayerElapsedFor(view, timeMs, interruptedPrayer === prayerCycle(timeMs));
     if (!view.adventure) {
       drawDroppings(view, elapsed, motion);
     }
-    const dx = motion && animation === 'refuse' ? shakeOffset(elapsed) : 0;
-    const hop = motion && animation === 'play' ? hopHeight(elapsed) : 0;
-    const dy = motion ? bobOffset(timeMs) - hop : 0;
-    drawBunny(ctx, view.body, view.mood, view.outfit, BUNNY.x + dx, BUNNY.y + dy);
+    if (prayer === null) {
+      const dx = motion && animation === 'refuse' ? shakeOffset(elapsed) : 0;
+      const hop = motion && animation === 'play' ? hopHeight(elapsed) : 0;
+      const dy = motion ? bobOffset(timeMs) - hop : 0;
+      drawBunny(ctx, view.body, view.mood, view.outfit, BUNNY.x + dx, BUNNY.y + dy);
+    } else {
+      drawPrayingBunny(ctx, view.body, view.outfit, BUNNY.x, BUNNY.y + (motion ? bowOffset(prayer) : 0));
+    }
     drawOneShotEffects(view, elapsed, motion);
-    drawMoodEffects(view, timeMs, motion);
+    drawMoodEffects(view, timeMs, motion, prayer !== null);
+    if (prayer !== null && motion && showsPrayerSparkle(prayer)) {
+      drawSprite(ctx, 'fx-sparkle', { x: bunnyCentreX() - SMALL_SPRITE / 2, y: headTop(view.body) - SMALL_SPRITE });
+    }
     if (view.asleep) {
       drawSleep(view, timeMs, motion);
     }
@@ -284,7 +339,7 @@ export function createScene(canvas: HTMLCanvasElement): Scene {
   };
 }
 
-export function sceneViewOf(bunny: Bunny, now: number): SceneView {
+export function sceneViewOf(bunny: Bunny, now: number, churchDay = false): SceneView {
   const adventure = bunny.adventure?.id ?? null;
   return {
     body: bodyKeyFor(stageAt(bunny, now), bunny.adultVariant),
@@ -294,6 +349,7 @@ export function sceneViewOf(bunny: Bunny, now: number): SceneView {
     asleep: bunny.asleep,
     depressed: bunny.depressed,
     adventure,
+    church: churchDay && !adventure,
   };
 }
 
@@ -304,13 +360,13 @@ function floorSentence(droppings: number): string {
   return droppings === 1 ? '1 dropping on the floor.' : `${droppings} droppings on the floor.`;
 }
 
-export function describeScene(bunny: Bunny, now: number): string {
+export function describeScene(bunny: Bunny, now: number, churchDay = false): string {
   if (bunny.adventure) {
     const adventure = getAdventure(bunny.adventure.id);
     return `${bunny.name} is on ${adventure.name}, wearing the ${getOutfit(adventure.outfitId).name.toLowerCase()} and looking happy.`;
   }
   const who = `${bunny.name}, ${STAGE_PHRASES[stageAt(bunny, now)]} bunny,`;
   const mood = moodOf(bunny);
-  const doing = mood === 'sleeping' ? `${who} is sleeping.` : `${who} looks ${mood}.`;
+  const doing = mood === 'sleeping' ? `${who} is sleeping${churchDay ? ' at church' : ''}.` : `${who} ${churchDay ? 'is at church and looks' : 'looks'} ${mood}.`;
   return `${doing} ${floorSentence(droppingsCount(bunny.needs.cleanliness))}`;
 }

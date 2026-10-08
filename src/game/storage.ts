@@ -4,6 +4,7 @@ import { isValidGameState } from './validate';
 export const SAVE_KEY = 'bnuuy:save';
 export const BROKEN_SAVE_KEY = 'bnuuy:save-broken';
 export const DEV_OFFSET_KEY = 'bnuuy:dev-time-offset';
+export const DEV_FORCE_SUNDAY_KEY = 'bnuuy:dev-force-sunday';
 
 export type LoadResult =
   | { status: 'ok'; state: GameState }

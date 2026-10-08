@@ -1,7 +1,9 @@
 import type { SoundName } from '../../audio/sfx';
+import { isSundayForced } from '../../devFlags';
 import { playSound } from '../../audio/sfx';
 import { getAdventure } from '../../game/catalog';
 import { ageMs, stageAt } from '../../game/stage';
+import { isChurchDay } from '../../game/sunday';
 import type { ActionResult, Bunny, GameAction, GameState, Needs, RefusalReason } from '../../game/types';
 import type { OneShotAnimation } from '../../render/scene';
 import { createScene, describeScene, sceneViewOf } from '../../render/scene';
@@ -136,8 +138,9 @@ export function createHomeScreen(ctx: AppContext): Screen {
       setHidden(downChip, !bunny.depressed);
       setHidden(chips, !bunny.asleep && !bunny.sick && !bunny.depressed);
 
-      scene.setView(sceneViewOf(bunny, now));
-      canvas.setAttribute('aria-label', describeScene(bunny, now));
+      const churchDay = isChurchDay(now, ctx.dev && isSundayForced());
+      scene.setView(sceneViewOf(bunny, now, churchDay));
+      canvas.setAttribute('aria-label', describeScene(bunny, now, churchDay));
       setHidden(awayBanner, !away);
       if (bunny.adventure) {
         setText(awayBanner, `${bunny.name} is on ${getAdventure(bunny.adventure.id).name}. Back in ${formatCountdown(bunny.adventure.endsAt - now)}.`);

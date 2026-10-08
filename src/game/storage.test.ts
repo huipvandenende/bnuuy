@@ -1,10 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import { BROKEN_SAVE_KEY, createInitialState, DEV_OFFSET_KEY, loadGame, SAVE_KEY, saveGame } from './storage';
+import { BROKEN_SAVE_KEY, createInitialState, DEV_FORCE_SUNDAY_KEY, DEV_OFFSET_KEY, loadGame, SAVE_KEY, saveGame } from './storage';
 import { createMemoryStorage, createThrowingStorage, makeState } from './testHelpers';
 
 describe('storage keys', () => {
   test('match the spec', () => {
-    expect([SAVE_KEY, BROKEN_SAVE_KEY, DEV_OFFSET_KEY]).toEqual(['bnuuy:save', 'bnuuy:save-broken', 'bnuuy:dev-time-offset']);
+    expect([SAVE_KEY, BROKEN_SAVE_KEY, DEV_OFFSET_KEY, DEV_FORCE_SUNDAY_KEY]).toEqual([
+      'bnuuy:save',
+      'bnuuy:save-broken',
+      'bnuuy:dev-time-offset',
+      'bnuuy:dev-force-sunday',
+    ]);
   });
 });
 

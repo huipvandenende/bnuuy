@@ -8,7 +8,7 @@ export function createAdoptScreen(ctx: AppContext): Screen {
   const canvas = el('canvas', { class: 'pixel', attrs: { role: 'img', 'aria-label': 'A baby bunny waits for a name.' } });
   const sceneWrap = el('div', { class: 'scene-wrap' }, canvas);
   const scene = createScene(canvas);
-  scene.setView({ body: 'baby', mood: 'content', outfit: null, droppings: 0, asleep: false, depressed: false, adventure: null });
+  scene.setView({ body: 'baby', mood: 'content', outfit: null, droppings: 0, asleep: false, depressed: false, adventure: null, church: false });
 
   const input = el('input', {
     attrs: { type: 'text', id: 'bunny-name', placeholder: 'Name your bunny', autocomplete: 'off', enterkeyhint: 'done', 'aria-describedby': 'name-error' },

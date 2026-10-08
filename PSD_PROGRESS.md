@@ -256,12 +256,52 @@ Each task is end to end: logic with unit tests, then UI, then a manual check in 
   Verify: the user approves them.
   Note: approved by the user on 2026-10-07.
 
+## Phase 7: Sunday church easter egg (PSD 1.3)
+
+Build the code first with placeholder sprites, then make the art. `PSD.md` sections UC17, 6.8 and 9.7 describe the feature.
+
+- [x] **7.1 Sunday logic and dev switch.** Add `isSunday(now)` in `src/game/sunday.ts`. Add the "Force Sunday" switch to the dev panel, stored in `bnuuy:dev-force-sunday` and only read when the URL has `dev=1` (`PSD.md` 5.3, 6.7, 8.5).
+  Verify: the unit tests for `isSunday` in `PSD.md` 11.1 pass; at `/bnuuy/?dev=1` the switch survives a reload; without `dev=1` a leftover key has no effect.
+  Note: `isChurchDay(now, forced)` in `sunday.ts` combines the two. The switch is read and written by `src/devFlags.ts`. Home passes `ctx.dev && isSundayForced()`, so the key is ignored without `dev=1`.
+
+- [x] **7.2 Church background.** Add `room-church` and the three `pray-paws-<shape>` sprites to the manifest. Give `SceneView` a church flag set by `sceneViewOf` (home and Sunday, or Force Sunday) and draw `room-church` instead of `room`. Update `describeScene` (6.8).
+  Verify: unit tests for `sceneViewOf` and `describeScene` from 11.1 pass; with Force Sunday on, Home shows the church placeholder; while away, the adventure scene still shows; `npm run check:sprites` reports the 4 new sprites as missing.
+  Note: `sceneViewOf` and `describeScene` take a `churchDay` argument (default false) instead of reading the clock's weekday, so their tests do not depend on the time zone. `SceneView.church` is required; the Adopt screen and gallery views pass `false`.
+
+- [x] **7.3 Prayer animation.** Add the prayer timing to `animations.ts` and draw the prayer pose in `scene.ts`: sleeping face, paws layer over the outfit, bow, sparkle, no idle bob, the skip rules and the reduced-motion rule (6.8).
+  Verify: the prayer timing unit tests from 11.1 pass; with Force Sunday on, a screenshot taken during a prayer shows the pose; feeding during a prayer ends it at once; an asleep bunny does not pray.
+  Note: `prayerElapsed`, `prayerCycle`, `bowOffset` and `showsPrayerSparkle` are in `animations.ts`; `prayerElapsedFor` and `drawPrayingBunny` are in `scene.ts`. A one-shot animation that overlaps a prayer window skips the rest of that window. Checked with Playwright screenshots: praying, then a refused feed, then no prayer later in the same window.
+
+- [x] **7.4 Gallery.** Add the "Sunday" section to the sprite gallery (6.7).
+  Verify: `/bnuuy/?dev=1#/dev/sprites` shows the church with each body praying and the prayer pose with every compatible outfit, using placeholders for now.
+  Note: two sections, "Sunday: church" (live scenes that pray every 7 s) and "Sunday: prayer pose with every outfit" (static, via `prayingBunnyCanvas`).
+
+- [x] **7.5 Church art.** Check `get_balance`. Make `room-church.png` as described in `PSD.md` 9.7 and log it in `art/ART_LOG.md`.
+  Verify: the gallery shows the church with a bunny sitting on plain floor; only palette colours are used; the generations used so far are recorded in the Notes.
+  Note: 26 generations (one `create_image_pro` call and one floor fill). The layout sketch was recreated as `art/layout-sketch.png`.
+
+- [x] **7.6 Prayer paws art.** Make `pray-paws-baby`, `pray-paws-teen` and `pray-paws-adult` as described in `PSD.md` 9.7 and log them.
+  Verify: `npm run check:sprites` reports 77 ok; in the gallery the paws never cover a face, line up on all three adult variants and show over every outfit. The phase used at most 150 generations in total.
+  Note: 15 generations, one inpaint per shape, all usable on the first try. Deviation from `PSD.md` 9.7: the extracted layers looked hollow over outfits, so each final layer copies the whole paw shape row by row from the inpaint result and closes it with a plum outline. A scratch script did this instead of `pixelart_workbench`. Details in `art/ART_LOG.md`. Phase total: 41 generations.
+
+- [x] **7.7 Review. CHECKPOINT.** Show the church and a prayer screenshot (or a short recording) to the user.
+  Verify: the user approves them. Redo any part they reject within the remaining budget. Tick the approval item in `PSD.md` section 12.
+  Note: approved by the user on 2026-10-08.
+
+- [x] **7.8 Final checks.** Run `npm run typecheck`, `npm test` and `npm run test:e2e`. Go through the version 1.3 list in `PSD.md` section 12 and tick what is verified.
+  Verify: all commands pass and every version 1.3 item is ticked.
+  Note: on 2026-10-08 `npm run typecheck`, `npm test` (313 tests), `npm run test:e2e` and `npm run check:sprites` (77 ok) pass. Every version 1.3 item is ticked.
+
+- [x] **7.9 Praying bodies (user feedback).** The front feet stayed on the ground while the paws were raised, which looked goofy. Add `bunny-<body>-praying` for all five bodies (`PSD.md` 6.8, 9.3, 9.7) and draw it instead of the sleeping body during a prayer.
+  Verify: `npm run check:sprites` reports 82 ok; the gallery and a Home screenshot during a prayer show no front feet, with and without outfits; `npm run typecheck`, `npm test` and `npm run test:e2e` pass.
+  Note: 15 generations (one inpaint each for baby, teen and adult-normal; fluffy and scruffy copied from adult-normal). The teen suit, adult suit and teen cloak layers had stray pixels on the old leg lines that drew the legs back over the lap; they were removed (originals in `art/raw/outfits/before-lap-cleanup/`). The normal pose looks the same because the body's own legs sit underneath. Details in `art/ART_LOG.md`.
+
 ---
 
 ## Notes
 
 - **Deploy URL:** https://huipvandenende.github.io/bnuuy/ (repository https://github.com/huipvandenende/bnuuy)
-- **PixelLab tools available:** see the note under task 1.7. The user upgraded to Tier 1 (2,000 generations per cycle, 8 concurrent jobs). The art phase used 781 generations. Every sprite is logged in `art/ART_LOG.md`.
+- **PixelLab tools available:** see the note under task 1.7. The user upgraded to Tier 1 (2,000 generations per cycle, 8 concurrent jobs). The art phase used 781 generations, the adventure scenes 220 and the Sunday art 56; 954 were left on 2026-10-08. Every sprite is logged in `art/ART_LOG.md`.
 - **Deviations and discoveries:**
   - Hosting moved from Cloudflare Pages to GitHub Pages (`PSD.md` 10.4). The game is served under `/bnuuy/`, also locally.
   - Work continued past the blocked checkpoints 1.6 and 1.7. Phases 2, 4 and most of 5 were built and verified with placeholder sprites (`PSD.md` 9.6). Tasks 3.1 and 3.5 were done early because they need no PixelLab art.
